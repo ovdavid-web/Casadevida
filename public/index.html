@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casa de Vida — Iglesia La Florida</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+    <!-- ===================== NAV ===================== -->
+    <nav id="nav-publica">
+        <div class="logo">
+            <img src="logo_cdv.png" alt="Casa de Vida" class="nav-logo">
+        </div>
+        <div class="nav-links-pub">
+            <a href="#" onclick="scrollToSection('seccion-nosotros'); return false;">Quiénes somos</a>
+            <a href="#" onclick="scrollToSection('seccion-grupos'); return false;">Grupos</a>
+            <a href="#" onclick="scrollToSection('seccion-horarios'); return false;">Horarios</a>
+            <a href="#" onclick="scrollToSection('seccion-donaciones'); return false;">Donar</a>
+            <a href="#" onclick="scrollToSection('seccion-contacto'); return false;">Contacto</a>
+        </div>
+        <div class="nav-buttons">
+            <button id="btn-volver-home" class="btn-outline hidden">← Volver</button>
+            <button id="btn-ir-login" class="btn-primary">Acceso Plataforma</button>
+        </div>
+    </nav>
+
+    <!-- ===================== HOME ===================== -->
+    <div id="vista-home">
+
+        <!-- HERO -->
+        <header class="hero">
+            <div class="hero-noise"></div>
+            <div class="hero-content">
+                <p class="hero-eyebrow">Iglesia Casa de Vida · La Florida, Santiago</p>
+                <h1 class="hero-title">Un lugar donde<br><em>la fe cobra vida</em></h1>
+                <p class="hero-tagline">Somos una familia espiritual cristocéntrica.<br>Todos son bienvenidos, tal como son.</p>
+                <div class="hero-cta">
+                    <button class="btn-hero-primary" onclick="scrollToSection('seccion-horarios')">Visítanos este domingo</button>
+                    <button class="btn-hero-ghost" onclick="scrollToSection('seccion-nosotros')">Conócenos</button>
+                </div>
+                <div class="hero-pills">
+                    <div class="hero-pill">
+                        <span class="pill-dot"></span>
+                        Domingo 11:00 · Servicio General
+                    </div>
+                    <div class="hero-pill">
+                        <span class="pill-dot red"></span>
+                        Live Stream cada domingo por Facebook
+                    </div>
+                </div>
+            </div>
+            <div class="hero-scroll">
+                <div class="scroll-line"></div>
+                <span>Descubre más</span>
+            </div>
+        </header>
+
+        <!-- QUIÉNES SOMOS -->
+        <section id="seccion-nosotros" class="section-nosotros">
+            <div class="container">
+                <div class="nosotros-grid">
+                    <div class="nosotros-texto">
+                        <p class="eyebrow">Nuestra historia</p>
+                        <h2>Somos Casa de Vida</h2>
+                        <p>Una comunidad de fe cristocéntrica en el corazón de La Florida. Bajo la guía de nuestros pastores <strong>Rodolfo Ormeño y Vania Ampuero</strong>, somos una familia espiritual donde cada persona es bienvenida a experimentar la gracia y el amor transformador de Jesucristo.</p>
+                        <p style="margin-top:14px;">Venimos de una formación en Asambleas de Dios y hoy somos una iglesia independiente, apasionada por Dios y por las personas de nuestra comunidad.</p>
+                        <div class="pastores-tags">
+                            <div class="pastor-item">
+                                <div class="pastor-av">RO</div>
+                                <span>Pastor Rodolfo Ormeño</span>
+                            </div>
+                            <div class="pastor-item">
+                                <div class="pastor-av">VA</div>
+                                <span>Pastora Vania Ampuero</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="creencias-col">
+                        <h3>En qué creemos</h3>
+                        <div class="creencia-item">
+                            <span class="creencia-num">01</span>
+                            <div><strong>Gracia para todos</strong><p>El sacrificio de Jesús provee salvación para toda la humanidad, respondida en libertad.</p></div>
+                        </div>
+                        <div class="creencia-item">
+                            <span class="creencia-num">02</span>
+                            <div><strong>La Palabra de Dios</strong><p>La Biblia es nuestra guía absoluta, inspirada por Dios y viva para cada generación.</p></div>
+                        </div>
+                        <div class="creencia-item">
+                            <span class="creencia-num">03</span>
+                            <div><strong>Transformación continua</strong><p>El Espíritu Santo nos santifica y transforma para vivir nuestro propósito en Cristo.</p></div>
+                        </div>
+                        <div class="creencia-item">
+                            <span class="creencia-num">04</span>
+                            <div><strong>Comunidad y Propósito</strong><p>La iglesia es el cuerpo de Cristo, diseñada para apoyarnos y servir a la sociedad.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MISIÓN Y VISIÓN -->
+        <section class="section-mision">
+            <div class="container">
+                <div class="mision-grid">
+                    <div class="mision-card">
+                        <span class="mi">✦</span>
+                        <h3>Nuestra Misión</h3>
+                        <p>Llevar el Evangelio de Jesucristo de manera práctica y relevante, invitando a cada persona a responder libremente a Su gracia y equipándolos para vivir su propósito.</p>
+                    </div>
+                    <div class="mision-card dark">
+                        <span class="mi gold">◈</span>
+                        <h3>Nuestra Visión</h3>
+                        <p>Ser una iglesia vibrante, acogedora y guiada por el Espíritu Santo, que forme discípulos arraigados en la Palabra y que impacten su entorno con el amor de Cristo.</p>
+                    </div>
+                    <div class="mision-card border-accent">
+                        <span class="mi">⬡</span>
+                        <h3>Nuestros Valores</h3>
+                        <p>Fe activa, comunidad auténtica, servicio desinteresado, gracia extendida a todos y crecimiento continuo guiado por el Espíritu Santo.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GRUPOS -->
+        <section id="seccion-grupos" class="section-grupos">
+            <div class="container">
+                <div class="section-header">
+                    <p class="eyebrow">Conéctate con otros</p>
+                    <h2>Nuestros Grupos</h2>
+                    <p class="section-sub">Hay un espacio para ti en Casa de Vida, sin importar en qué etapa de la vida estés.</p>
+                </div>
+                <div class="grupos-grid">
+                    <div class="grupo-card"><div class="grupo-icon">💑</div><h3>Matrimonios</h3><p>Espacio de crecimiento y comunidad para parejas que quieren fortalecer su relación en Cristo.</p><span class="grupo-tag zoom-tag">📹 Zoom · Jueves 21:00</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">🔥</div><h3>Jóvenes</h3><p>Para jóvenes que quieren crecer en su fe, conectar con otros y descubrir su propósito.</p><span class="grupo-tag presencial-tag">📍 Presencial · Sábados</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">👧</div><h3>Tweens</h3><p>Un espacio seguro, divertido y lleno de propósito para los chicos y chicas de la iglesia.</p><span class="grupo-tag presencial-tag">📍 Presencial · Sábados</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">🌸</div><h3>Mujeres</h3><p>Comunidad de mujeres que se apoyan, oran juntas y crecen en la Palabra de Dios.</p><span class="grupo-tag presencial-tag">📍 Presencial · Sábados</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">💜</div><h3>Amigas</h3><p>Grupo para chicas de 12 a 16 años. Fe genuina, amistad real y un propósito claro.</p><span class="grupo-tag presencial-tag">📍 Presencial · Sábados</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">📖</div><h3>Escuela Bíblica</h3><p>Estudio del Pentateuco para líderes, voluntarios y nuevos creyentes que quieran profundizar.</p><span class="grupo-tag zoom-tag">📹 Zoom · Martes 21:00</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">🌱</div><h3>Vida sobre la Roca</h3><p>Programa especialmente diseñado para nuevos creyentes que dan sus primeros pasos en la fe.</p><span class="grupo-tag zoom-tag">📹 Zoom · Lunes 21:00</span></div>
+                    <div class="grupo-card"><div class="grupo-icon">🙏</div><h3>Oración</h3><p>Conexión de oración semanal para interceder juntos por la iglesia y la comunidad.</p><span class="grupo-tag wsp-tag">💬 WhatsApp · Jueves 19:00</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALENDARIO -->
+        <section class="section-calendario">
+            <div class="container">
+                <div class="section-header">
+                    <p class="eyebrow">Semana a semana</p>
+                    <h2>Calendario Semanal</h2>
+                    <p class="section-sub">Actividades recurrentes de Casa de Vida. ¡Únete cuando quieras!</p>
+                </div>
+                <div class="calendario-grid">
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">LUN</div>
+                        <div class="cal-evento zoom-ev"><span class="cal-hora">21:00</span><span>Vida sobre la Roca</span><span class="cal-medio">📹 Zoom</span></div>
+                    </div>
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">MAR</div>
+                        <div class="cal-evento zoom-ev"><span class="cal-hora">21:00</span><span>Escuela Bíblica</span><span class="cal-medio">📹 Zoom</span></div>
+                    </div>
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">MIÉ</div>
+                        <div class="cal-evento presencial-ev"><span class="cal-hora">19:30</span><span>Reunión Mitad de Semana</span><span class="cal-medio">📍 Santa Julia 833</span></div>
+                    </div>
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">JUE</div>
+                        <div class="cal-evento wsp-ev"><span class="cal-hora">19:00</span><span>Oración</span><span class="cal-medio">💬 WhatsApp</span></div>
+                        <div class="cal-evento zoom-ev" style="margin-top:8px;"><span class="cal-hora">21:00</span><span>Matrimonios</span><span class="cal-medio">📹 Zoom</span></div>
+                    </div>
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">VIE</div>
+                        <div class="cal-evento libre-ev"><span style="color:var(--muted);font-size:13px;">Sin actividad</span></div>
+                    </div>
+                    <div class="cal-dia">
+                        <div class="cal-nombre-dia">SÁB</div>
+                        <div class="cal-evento presencial-ev"><span class="cal-hora">Tarde</span><span>Grupos: Jóvenes, Tweens, Mujeres, Amigas</span><span class="cal-medio">📍 Santa Julia 833</span></div>
+                    </div>
+                    <div class="cal-dia dom">
+                        <div class="cal-nombre-dia">DOM ⭐</div>
+                        <div class="cal-evento presencial-ev"><span class="cal-hora">10:30</span><span>Coffee & Conexión ☕</span><span class="cal-medio">📍 Santa Julia 833</span></div>
+                        <div class="cal-evento live-ev" style="margin-top:8px;"><span class="cal-hora">11:00</span><span>Servicio General 🔴</span><span class="cal-medio">📍 Presencial + Facebook Live</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HORARIOS Y UBICACIÓN -->
+        <section id="seccion-horarios" class="section-horarios">
+            <div class="container">
+                <div class="section-header">
+                    <p class="eyebrow">Te esperamos</p>
+                    <h2>Acompáñanos este domingo</h2>
+                    <p class="section-sub">No necesitas reserva. Solo ven, hay un lugar para ti y tu familia.</p>
+                </div>
+                <div class="horarios-ubicacion">
+                    <div class="horarios-lista">
+                        <div class="hi-item">
+                            <div class="hi-dia">MIÉ</div>
+                            <div class="hi-info"><span class="hi-hora">19:30 hrs</span><span class="hi-nombre">Reunión de Mitad de Semana</span><span class="hi-desc">Estudio bíblico, oración y comunidad</span></div>
+                        </div>
+                        <div class="hi-item destacado">
+                            <div class="hi-dia">DOM</div>
+                            <div class="hi-info"><span class="hi-hora">10:30 hrs</span><span class="hi-nombre">Coffee & Conexión ☕</span><span class="hi-desc">Bienvenida, café y conversación antes del servicio</span></div>
+                            <span class="hi-badge">Principal</span>
+                        </div>
+                        <div class="hi-item">
+                            <div class="hi-dia">DOM</div>
+                            <div class="hi-info"><span class="hi-hora">11:00 hrs</span><span class="hi-nombre">Servicio General 🔴</span><span class="hi-desc">Alabanza, Palabra y altar · También por Facebook Live</span></div>
+                        </div>
+                    </div>
+                    <div class="ubicacion-card">
+                        <p class="eyebrow">Cómo llegar</p>
+                        <h3>Santa Julia 833</h3>
+                        <p>La Florida, Santiago, Chile</p>
+                        <div class="ubicacion-tags">
+                            <span>🚇 Metro San José de la Estrella</span>
+                            <span>🚌 Acceso en micro</span>
+                            <span>🅿️ Estacionamiento disponible</span>
+                        </div>
+                        <div class="mapa-wrap">
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3326.3315752329244!2d-70.5898394!3d-33.5284893!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662d08a287dddd7%3A0x6a0a09e0a811c034!2sSanta%20Julia%20833%2C%20La%20Florida%2C%20Regi%C3%B3n%20Metropolitana!5e0!3m2!1ses!2scl!4v1700000000000!5m2!1ses!2scl" width="100%" height="220" style="border:0;border-radius:8px;" allowfullscreen="" loading="lazy"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DONACIONES -->
+        <section id="seccion-donaciones" class="section-donaciones">
+            <div class="container">
+                <div class="donaciones-grid">
+                    <div class="donaciones-texto">
+                        <p class="eyebrow light">Apoya la visión</p>
+                        <h2>Tu aporte hace<br>la diferencia</h2>
+                        <p>Cada ofrenda, diezmo y donación permite que Casa de Vida siga creciendo, equipando personas y sirviendo a nuestra comunidad en La Florida.</p>
+                        <p class="don-verso">"Cada uno dé como propuso en su corazón, no con tristeza ni por necesidad, porque Dios ama al dador alegre." — 2 Cor 9:7</p>
+                        <div class="don-metodos">
+                            <div class="don-item">
+                                <span class="don-icon">🏦</span>
+                                <div>
+                                    <strong>Transferencia bancaria</strong>
+                                    <span>Banco Estado · Cuenta Vista<br>RUT: 12.345.678-9 · casadevida@email.cl</span>
+                                </div>
+                            </div>
+                            <div class="don-item">
+                                <span class="don-icon">💳</span>
+                                <div>
+                                    <strong>Mercado Pago</strong>
+                                    <span>Escanea el QR o haz clic en el botón para donar en línea de forma segura.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="donaciones-qr-col">
+                        <div class="qr-card">
+                            <p class="qr-titulo">Donar con QR</p>
+                            <div class="qr-mock-wrap">
+                                <div class="qr-mock">
+                                    <div class="qr-inner"><span>QR</span><small>Mercado Pago</small></div>
+                                </div>
+                                <p class="qr-nota">QR de Mercado Pago se configurará al activar la cuenta oficial de la iglesia</p>
+                            </div>
+                            <button class="btn-donar">💛 Donar en línea</button>
+                            <p class="qr-seguro">🔒 Pago seguro · Mercado Pago Chile</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACTO -->
+        <section id="seccion-contacto" class="section-contacto">
+            <div class="container">
+                <div class="contacto-grid">
+                    <div class="contacto-info">
+                        <p class="eyebrow">Escríbenos</p>
+                        <h2>¿Tienes alguna duda?</h2>
+                        <p>Estamos acá para ayudarte. Escríbenos por este formulario o búscanos en redes sociales.</p>
+                        <div class="contacto-datos">
+                            <div class="cd-item"><span>📍</span><span>Santa Julia 833, La Florida, Santiago</span></div>
+                            <div class="cd-item"><span>✉️</span><span>contacto@casadevida.cl</span></div>
+                            <div class="cd-item"><span>📘</span><span>facebook.com/casadevidachile</span></div>
+                        </div>
+                        <div class="rrss-btns">
+                            <a href="#" class="rrss-btn fb">📘 Facebook</a>
+                            <a href="#" class="rrss-btn ig">📷 Instagram</a>
+                            <a href="#" class="rrss-btn yt">▶️ YouTube</a>
+                        </div>
+                    </div>
+                    <form class="contacto-form" onsubmit="enviarContacto(event)">
+                        <div class="cf-group"><label>Tu nombre</label><input type="text" placeholder="¿Cómo te llamas?" required></div>
+                        <div class="cf-group"><label>Correo electrónico</label><input type="email" placeholder="tu@correo.com" required></div>
+                        <div class="cf-group"><label>¿En qué te podemos ayudar?</label>
+                            <select><option>Información general</option><option>Quiero visitar la iglesia</option><option>Quiero unirme a un grupo</option><option>Necesito oración</option><option>Otro</option></select>
+                        </div>
+                        <div class="cf-group"><label>Mensaje</label><textarea placeholder="Cuéntanos..." rows="4"></textarea></div>
+                        <button type="submit" class="btn-contacto">Enviar mensaje →</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <img src="logo_cdv.png" alt="Casa de Vida" class="footer-logo">
+                        <p>Iglesia Casa de Vida<br>La Florida, Santiago, Chile</p>
+                        <p class="footer-verse">"Yo soy el camino, la verdad y la vida." — Juan 14:6</p>
+                    </div>
+                    <div class="footer-col"><h4>Servicios</h4><ul><li>Miércoles 19:30 — Reunión</li><li>Domingo 10:30 — Coffee</li><li>Domingo 11:00 — Servicio General</li><li>🔴 Live todos los domingos</li></ul></div>
+                    <div class="footer-col"><h4>Grupos</h4><ul><li>Matrimonios — Jue 21:00</li><li>Jóvenes — Sáb</li><li>Mujeres — Sáb</li><li>Escuela Bíblica — Mar 21:00</li></ul></div>
+                    <div class="footer-col"><h4>Contacto</h4><ul><li>Santa Julia 833, La Florida</li><li>contacto@casadevida.cl</li></ul>
+                        <button class="footer-plataforma-btn" onclick="document.getElementById('btn-ir-login').click()">Acceso Plataforma →</button>
+                    </div>
+                </div>
+                <div class="footer-bottom"><p>© 2025 Casa de Vida · Todos los derechos reservados</p></div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ===================== LOGIN ===================== -->
+    <div id="vista-login" class="hidden">
+        <div class="login-container">
+            <div class="login-lado">
+                <img src="logo_cdv.png" alt="Casa de Vida" class="login-logo">
+                <h2>Plataforma<br>Casa de Vida</h2>
+                <p>Sistema de gestión para la familia de Casa de Vida. Acceso restringido a miembros autorizados.</p>
+                <div class="login-features">
+                    <div class="lf-item"><span>⚡</span> Gestión de miembros</div>
+                    <div class="lf-item"><span>📊</span> Control financiero</div>
+                    <div class="lf-item"><span>🗓️</span> Programación de servicios</div>
+                    <div class="lf-item"><span>🔒</span> Auditoría y seguridad</div>
+                </div>
+            </div>
+            <div class="login-form-lado">
+                <div class="login-box">
+                    <h2>Iniciar Sesión</h2>
+                    <p class="login-sub">Ingresa tus credenciales para continuar.</p>
+                    <div class="lf-group"><label>Usuario o Correo</label><input type="text" placeholder="tu@casadevida.cl" class="lf-input"></div>
+                    <div class="lf-group"><label>Contraseña</label><input type="password" placeholder="••••••••" class="lf-input"></div>
+                    <div class="lf-group">
+                        <label>Simular ingreso como</label>
+                        <select id="simulador-rol" class="lf-input">
+                            <option value="admin">Administrador / Pastor</option>
+                            <option value="miembro">Miembro</option>
+                        </select>
+                    </div>
+                    <button id="btn-ingresar" class="btn-login">Ingresar →</button>
+                    <p class="login-nota">* Simulador de roles · Backend en desarrollo</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== DASHBOARD ===================== -->
+    <div id="vista-dashboard" class="hidden">
+        <header class="dash-header">
+            <div class="dash-logo">
+                <img src="logo_cdv.png" alt="CDV" class="dash-logo-img">
+                <span class="dash-titulo">Casa de Vida</span>
+                <span class="dash-tag">Plataforma</span>
+            </div>
+            <div class="user-profile">
+                <div class="user-avatar" id="user-avatar-inicial">A</div>
+                <div class="user-info-text">
+                    <span id="nombre-usuario-activo" class="user-name">Usuario</span>
+                    <span id="rol-usuario-activo" class="user-rol">Rol</span>
+                </div>
+                <button id="btn-cerrar-sesion" class="btn-cerrar">Cerrar sesión</button>
+            </div>
+        </header>
+        <div class="dash-layout">
+            <aside class="sidebar">
+                <ul id="menu-admin" class="nav-links hidden">
+                    <li class="nav-section-title">ADMINISTRACIÓN</li>
+                    <li><button class="nav-btn active" data-target="vista-inicio-admin"><span class="nav-icon">⬛</span> Panel General</button></li>
+                    <li><button class="nav-btn" data-target="vista-miembros"><span class="nav-icon">👥</span> Directorio</button></li>
+                    <li><button class="nav-btn" data-target="vista-visitas"><span class="nav-icon">👤</span> Visitas</button></li>
+                    <li><button class="nav-btn" data-target="vista-servicios"><span class="nav-icon">🗓️</span> Servicios y Roles</button></li>
+                    <li class="nav-separator"></li>
+                    <li class="nav-section-title">FINANZAS</li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
+                </ul>
+                <ul id="menu-miembro" class="nav-links hidden">
+                    <li class="nav-section-title">MI ESPACIO</li>
+                    <li><button class="nav-btn active" data-target="vista-perfil-miembro"><span class="nav-icon">👤</span> Mi Perfil</button></li>
+                    <li><button class="nav-btn" data-target="vista-mis-asignaciones"><span class="nav-icon">🗓️</span> Mis Asignaciones</button></li>
+                    <li><button class="nav-btn" data-target="vista-mis-aportes"><span class="nav-icon">💳</span> Mis Aportes</button></li>
+                </ul>
+            </aside>
+            <main class="main-content">
+                <section id="vista-inicio-admin" class="view-section hidden">
+                    <div class="page-header"><div><h1>Panel General</h1><p>Resumen de actividad de Casa de Vida</p></div></div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><span class="stat-num">47</span><span class="stat-label">Miembros activos</span></div></div>
+                        <div class="stat-card"><div class="stat-icon amber">👤</div><div class="stat-info"><span class="stat-num">8</span><span class="stat-label">Visitas este mes</span></div></div>
+                        <div class="stat-card"><div class="stat-icon green">💰</div><div class="stat-info"><span class="stat-num">$342.500</span><span class="stat-label">Ingresos este mes</span></div></div>
+                        <div class="stat-card"><div class="stat-icon purple">🗓️</div><div class="stat-info"><span class="stat-num">3</span><span class="stat-label">Servicios programados</span></div></div>
+                    </div>
+                    <div class="dashboard-2col">
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Próximos Servicios</h3>
+                            <div class="servicio-row"><div class="servicio-fecha"><span class="sf-dia">MIÉ</span><span class="sf-num">11</span></div><div class="servicio-det"><strong>Mitad de Semana</strong><span>19:30 hrs · 12 voluntarios</span></div><span class="s-badge ok">Completo</span></div>
+                            <div class="servicio-row"><div class="servicio-fecha"><span class="sf-dia">DOM</span><span class="sf-num">15</span></div><div class="servicio-det"><strong>Servicio General</strong><span>11:00 hrs · 8/15 voluntarios</span></div><span class="s-badge warn">Incompleto</span></div>
+                        </div>
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Últimas Visitas</h3>
+                            <div class="visita-row"><div class="visita-av">MA</div><div class="visita-info"><strong>María Alejandra F.</strong><span>Dom 8 Jun · Referida por Ana López</span></div></div>
+                            <div class="visita-row"><div class="visita-av">CR</div><div class="visita-info"><strong>Carlos R.</strong><span>Mié 4 Jun · Primera visita</span></div></div>
+                            <div class="visita-row"><div class="visita-av">LP</div><div class="visita-info"><strong>Laura & Pedro S.</strong><span>Dom 1 Jun · Pareja nueva</span></div></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="vista-miembros" class="view-section hidden">
+                    <div class="page-header">
+                        <div><h1>Directorio de Miembros</h1><p>Gestión del directorio de la iglesia</p></div>
+                        <button class="btn-action" onclick="abrirFormNuevoMiembro()">+ Nuevo Miembro</button>
+                    </div>
+
+                    <!-- Pestañas -->
+                    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;">
+                        <button id="tab-miembros" onclick="cambiarTabDirectorio('miembros')" style="padding:10px 20px;font-size:13px;cursor:pointer;background:none;border:none;border-bottom:2px solid var(--text);font-weight:600;color:var(--text);">Miembros</button>
+                        <button id="tab-familias" onclick="cambiarTabDirectorio('familias')" style="padding:10px 20px;font-size:13px;cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);">Familias</button>
+                    </div>
+
+                    <!-- TAB MIEMBROS -->
+                    <div id="contenido-tab-miembros">
+                        <div id="form-nuevo-miembro" class="form-card hidden">
+                            <h3 class="form-title">Registrar Nuevo Miembro</h3>
+                            <form class="admin-form" onsubmit="registrarMiembro(event)">
+                                <div class="form-grid">
+                                    <div class="form-group"><label>Nombre Completo *</label><input type="text" required></div>
+                                    <div class="form-group"><label>RUT</label><input type="text" placeholder="12.345.678-9"></div>
+                                    <div class="form-group"><label>Correo</label><input type="email"></div>
+                                    <div class="form-group"><label>Teléfono</label><input type="tel"></div>
+                                    <div class="form-group"><label>Fecha Bautismo</label><input type="date"></div>
+                                    <div class="form-group"><label>Área de Servicio</label><select><option>Alabanza y Adoración</option><option>Ujieres / Bienvenida</option><option>Niños</option><option>Multimedia / Audio</option><option>Administración</option><option>Sin asignar</option></select></div>
+                                </div>
+                                <div class="form-actions"><button type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="toggleForm('form-nuevo-miembro')">Cancelar</button></div>
+                            </form>
+                        </div>
+                        <div class="table-card">
+                            <div class="table-header"><input type="search" placeholder="Buscar miembro..." class="search-input"><span class="table-count">0 miembros</span></div>
+                            <table class="data-table">
+                                <thead><tr><th>Nombre</th><th>Área</th><th>Estado</th><th>Ingreso</th><th></th></tr></thead>
+                                <tbody>
+                                    <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB FAMILIAS -->
+                    <div id="contenido-tab-familias" class="hidden">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                            <span style="font-size:14px;color:var(--muted);" id="familias-contador"></span>
+                            <button class="btn-action" onclick="toggleForm('form-nueva-familia')">+ Nueva Familia</button>
+                        </div>
+                        <div id="form-nueva-familia" class="form-card hidden">
+                            <h3 class="form-title">Crear Nueva Familia</h3>
+                            <form class="admin-form" onsubmit="crearFamilia(event)">
+                                <div class="form-grid">
+                                    <div class="form-group span-2"><label>Nombre de la Familia</label><input type="text" id="nombre-nueva-familia" placeholder="Ej: Familia Ormeño, Los Pérez..." required></div>
+                                </div>
+                                <div class="form-actions"><button type="submit" class="btn-action">Crear Familia</button><button type="button" class="btn-cancel" onclick="toggleForm('form-nueva-familia')">Cancelar</button></div>
+                            </form>
+                        </div>
+                        <div id="lista-familias"></div>
+                        <div style="margin-top:24px;">
+                            <h4 style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:600;">SIN GRUPO FAMILIAR</h4>
+                            <div id="lista-sin-familia" class="table-card"></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="vista-visitas" class="view-section hidden">
+                    <div class="page-header"><div><h1>Registro de Visitas</h1><p>Primera vez y seguimiento pastoral</p></div><button class="btn-action" onclick="toggleForm('form-nueva-visita')">+ Registrar Visita</button></div>
+                    <div id="form-nueva-visita" class="form-card hidden">
+                        <h3 class="form-title">Nueva Visita</h3>
+                        <form class="admin-form" onsubmit="registrarVisita(event)">
+                            <div class="form-grid">
+                                <div class="form-group"><label>Nombre *</label><input type="text" required></div>
+                                <div class="form-group"><label>Contacto</label><input type="text"></div>
+                                <div class="form-group"><label>Fecha *</label><input type="date" required></div>
+                                <div class="form-group"><label>¿Cómo llegó?</label><select><option>Referido por un miembro</option><option>Redes sociales</option><option>Pasó por el sector</option><option>Otro</option></select></div>
+                                <div class="form-group span-2"><label>Observaciones</label><textarea></textarea></div>
+                            </div>
+                            <div class="form-actions"><button type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="toggleForm('form-nueva-visita')">Cancelar</button></div>
+                        </form>
+                    </div>
+                    <div class="table-card">
+                        <div class="visitas-list">
+                            <div class="visita-card-full"><div class="vcf-header"><div class="visita-av large">MA</div><div><strong>María Alejandra F.</strong><span class="vcf-fecha">Dom 8 Junio 2025</span></div><span class="badge new">Nueva</span></div><div class="vcf-details"><span>📱 +56 9 8765 4321</span><span>📌 Referida por Ana González</span><span>📝 Interesada en ministerio de niños</span></div></div>
+                            <div class="visita-card-full"><div class="vcf-header"><div class="visita-av large">CR</div><div><strong>Carlos R.</strong><span class="vcf-fecha">Mié 4 Junio 2025</span></div><span class="badge followup">Seguimiento</span></div><div class="vcf-details"><span>📱 +56 9 1234 5678</span><span>📌 Pasó por el sector</span><span>📝 Segunda visita, buen diálogo con los pastores</span></div></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="vista-servicios" class="view-section hidden">
+                    <div class="page-header"><div><h1>Servicios y Roles</h1><p>Programación y asignación de voluntarios</p></div><button class="btn-action">+ Nuevo Servicio</button></div>
+                    <div class="servicio-full-card"><div class="sfc-header"><div class="sfc-fecha"><span>DOM</span><strong>15 JUN</strong></div><div class="sfc-info"><h3>Servicio General</h3><span>11:00 hrs — Santa Julia 833</span></div><span class="s-badge warn">8/15 roles</span></div>
+                    <div class="roles-grid"><div class="rol-item asignado"><span class="rol-nombre">Alabanza</span><span class="rol-persona">David Ormeño</span></div><div class="rol-item asignado"><span class="rol-nombre">Audio / Sonido</span><span class="rol-persona">Juan Rojas</span></div><div class="rol-item asignado"><span class="rol-nombre">Ujier Principal</span><span class="rol-persona">Ana González</span></div><div class="rol-item vacio"><span class="rol-nombre">Multimedia</span><span class="rol-persona">Sin asignar</span></div><div class="rol-item vacio"><span class="rol-nombre">Niños — Sala A</span><span class="rol-persona">Sin asignar</span></div><div class="rol-item vacio"><span class="rol-nombre">Niños — Sala B</span><span class="rol-persona">Sin asignar</span></div></div></div>
+                </section>
+                <section id="vista-finanzas" class="view-section hidden">
+                    <div class="page-header"><div><h1>Registro Financiero</h1><p>Ofrendas, diezmos y donaciones</p></div></div>
+                    <div class="finanzas-layout">
+                        <div class="form-card finanzas-card">
+                            <h3 class="form-title">Nuevo Ingreso</h3>
+                            <form class="admin-form" onsubmit="registrarIngreso(event)">
+                                <div class="form-group"><label>Tipo de Ingreso</label><select id="tipo-ingreso" onchange="toggleAsociacion(this.value)"><option>Ofrenda por Servicio</option><option>Diezmo de Miembro</option><option>Ofrenda Individual</option><option>Donación Especial</option></select></div>
+                                <div id="bloque-asociacion" class="hidden">
+                                    <div class="form-group">
+                                        <label>Asociar a</label>
+                                        <select id="tipo-asociacion" onchange="cargarOpcionesAsociacion(this.value)" style="margin-bottom:8px;">
+                                            <option value="individual">Miembro individual</option>
+                                            <option value="familiar">Grupo familiar</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label id="label-asociacion">Miembro</label>
+                                        <select id="select-asociacion">
+                                            <option value="">Selecciona...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label>Monto (CLP $)</label><input type="number" id="monto-ingreso" placeholder="0" min="0"></div>
+                                <div class="form-group">
+                                    <label>Fecha del Servicio</label>
+                                    <input type="date" id="fecha-servicio" onchange="detectarServicio(this.value)">
+                                </div>
+                                <div class="form-group">
+                                    <label>Servicio Detectado</label>
+                                    <input type="text" id="nombre-servicio-detectado" readonly placeholder="Selecciona una fecha..." style="background:var(--paper);color:var(--muted);">
+                                </div>
+                                <div class="form-group"><label>Observaciones</label><textarea id="observaciones-ingreso"></textarea></div>
+                                <button type="submit" class="btn-action full-width">Registrar Ingreso</button>
+                            </form>
+                        </div>
+                        <div class="finanzas-resumen">
+                            <div class="resumen-card"><span class="resumen-label">Este Mes</span><span class="resumen-monto">$0</span></div>
+                            <div class="resumen-card green"><span class="resumen-label">Diezmos</span><span class="resumen-monto">$0</span></div>
+                            <div class="resumen-card blue"><span class="resumen-label">Ofrendas</span><span class="resumen-monto">$0</span></div>
+                            <div class="resumen-card amber"><span class="resumen-label">Donaciones</span><span class="resumen-monto">$0</span></div>
+                            <div class="table-card" style="grid-column:1/-1;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;flex-wrap:wrap;gap:8px;">
+                                    <h4 style="font-weight:700;font-size:14px;">Registros</h4>
+                                    <div style="display:flex;gap:8px;align-items:center;">
+                                        <select id="filtro-anio" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;"></select>
+                                        <select id="filtro-mes" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;">
+                                            <option value="">Todos</option>
+                                            <option value="01">Enero</option>
+                                            <option value="02">Febrero</option>
+                                            <option value="03">Marzo</option>
+                                            <option value="04">Abril</option>
+                                            <option value="05">Mayo</option>
+                                            <option value="06">Junio</option>
+                                            <option value="07">Julio</option>
+                                            <option value="08">Agosto</option>
+                                            <option value="09">Septiembre</option>
+                                            <option value="10">Octubre</option>
+                                            <option value="11">Noviembre</option>
+                                            <option value="12">Diciembre</option>
+                                        </select>
+                                        <select id="filtro-tipo" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;">
+                                            <option value="">Todos los tipos</option>
+                                            <option value="Diezmo de Miembro">Diezmos</option>
+                                            <option value="Ofrenda por Servicio">Ofrenda por Servicio</option>
+                                            <option value="Ofrenda Individual">Ofrenda Individual</option>
+                                            <option value="Donación Especial">Donación Especial</option>
+                                        </select>
+                                        <select id="filtro-filas" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;">
+                                            <option value="10" selected>10</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="9999">Todo</option>
+                                        </select>
+                                        <span id="filtro-contador" style="font-size:12px;color:var(--muted);"></span>
+                                    </div>
+                                </div>
+                                <table class="data-table">
+                                    <thead><tr><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Servicio</th><th></th></tr></thead>
+                                    <tbody id="tabla-ingresos">
+                                        <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
+                                    </tbody>
+                                </table>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);">
+                                    <span id="pag-info" style="font-size:12px;color:var(--muted);"></span>
+                                    <div style="display:flex;gap:6px;">
+                                        <button id="btn-prev" onclick="cambiarPagina(-1)" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text);">← Anterior</button>
+                                        <button id="btn-next" onclick="cambiarPagina(1)" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text);">Siguiente →</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <section id="vista-finanzas-reporte" class="view-section hidden">
+                    <div class="page-header"><h1>Reportes Financieros</h1><p>Próximamente con gráficos y exportación</p></div>
+                    <div class="empty-state"><div class="empty-icon">📊</div><h3>Reportes visuales próximamente</h3><p>Gráficos de tendencias, comparativas mensuales y exportación a PDF/Excel.</p><span class="coming-soon">En desarrollo</span></div>
+                </section>
+                <section id="vista-perfil-miembro" class="view-section hidden">
+                    <div class="page-header"><h1>Mi Perfil</h1><p>Tu información personal y de membresía</p></div>
+                    <div class="perfil-layout">
+                        <div class="perfil-card"><div class="perfil-avatar">DO</div><h2 class="perfil-nombre">David Ormeño</h2><span class="badge active" style="display:block;width:fit-content;margin:8px auto;">Miembro Activo</span>
+                            <div class="perfil-datos"><div class="pd-item"><span class="pd-label">Correo</span><span>david.ormeno@email.com</span></div><div class="pd-item"><span class="pd-label">Teléfono</span><span>+56 9 8765 1234</span></div><div class="pd-item"><span class="pd-label">Área</span><span>Alabanza y Adoración</span></div><div class="pd-item"><span class="pd-label">Miembro desde</span><span>Enero 2023</span></div><div class="pd-item"><span class="pd-label">Bautismo</span><span>15 Marzo 2023</span></div></div>
+                        </div>
+                        <div class="perfil-side">
+                            <div class="dash-widget"><h3 class="widget-title">Próximo Servicio</h3><div class="servicio-row" style="border:none;padding:0;"><div class="servicio-fecha"><span class="sf-dia">DOM</span><span class="sf-num">15</span></div><div class="servicio-det"><strong>Servicio General</strong><span>11:00 hrs · Alabanza</span></div></div></div>
+                            <div class="dash-widget" style="margin-top:20px;"><h3 class="widget-title">Resumen de Aportes</h3><div class="ar-item"><span class="ar-label">Este mes</span><span class="ar-monto">$35.000</span></div><div class="ar-item"><span class="ar-label">Acumulado 2025</span><span class="ar-monto">$210.000</span></div></div>
+                        </div>
+                    </div>
+                </section>
+                <section id="vista-mis-asignaciones" class="view-section hidden">
+                    <div class="page-header"><h1>Mis Asignaciones</h1><p>Servicios en los que participarás</p></div>
+                    <div class="asignaciones-list">
+                        <div class="asignacion-card"><div class="ac-fecha"><span>DOM</span><strong>15</strong><span>JUN</span></div><div class="ac-info"><h3>Servicio General</h3><p>11:00 hrs · Santa Julia 833</p><span class="ac-rol">🎵 Alabanza y Adoración</span></div><span class="badge active">Confirmado</span></div>
+                        <div class="asignacion-card"><div class="ac-fecha"><span>MIÉ</span><strong>18</strong><span>JUN</span></div><div class="ac-info"><h3>Reunión Mitad de Semana</h3><p>19:30 hrs · Santa Julia 833</p><span class="ac-rol">🎵 Alabanza y Adoración</span></div><span class="badge active">Confirmado</span></div>
+                    </div>
+                </section>
+                <section id="vista-mis-aportes" class="view-section hidden">
+                    <div class="page-header"><h1>Mis Aportes</h1><p>Tu historial privado de contribuciones</p></div>
+                    <div class="aportes-bar"><div class="apres-item"><span class="apres-label">Total 2025</span><span class="apres-num">$210.000</span></div><div class="apres-item"><span class="apres-label">Último aporte</span><span class="apres-num">08/06/2025</span></div><div class="apres-item"><span class="apres-label">Tipo principal</span><span class="apres-num">Diezmo</span></div></div>
+                    <div class="table-card"><table class="data-table"><thead><tr><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Servicio</th></tr></thead><tbody><tr><td>Diezmo</td><td class="monto-cell">$35.000</td><td>08/06/2025</td><td>Dom 8 Jun</td></tr><tr><td>Diezmo</td><td class="monto-cell">$35.000</td><td>25/05/2025</td><td>Dom 25 May</td></tr><tr><td>Ofrenda</td><td class="monto-cell">$10.000</td><td>11/05/2025</td><td>Dom 11 May</td></tr></tbody></table></div>
+                </section>
+            </main>
+        </div>
+    </div>
+<!-- Modal detalle ingreso -->
+<div id="modal-detalle" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:16px;padding:32px;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="font-family:'Montserrat',serif;font-size:18px;">Detalle del Registro</h3>
+            <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
+        </div>
+        <div id="modal-detalle-contenido"></div>
+    </div>
+</div>
+<!-- Modal confirmación fecha futura -->
+<div id="modal-fecha-futura" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:16px;padding:32px;min-width:320px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="text-align:center;margin-bottom:24px;">
+            <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+            <h3 style="font-family:'Montserrat',serif;font-size:18px;margin-bottom:8px;">Fecha Futura</h3>
+            <p style="color:var(--muted);font-size:14px;line-height:1.5;">La fecha seleccionada aún no ha ocurrido. ¿Deseas registrar el ingreso de todas formas?</p>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <button id="modal-fecha-cancelar" style="padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-weight:600;font-size:14px;">Cancelar</button>
+            <button id="modal-fecha-confirmar" style="padding:12px;border-radius:10px;border:none;background:#0f172a;color:white;cursor:pointer;font-weight:600;font-size:14px;">Registrar igual</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

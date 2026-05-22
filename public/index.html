@@ -389,7 +389,7 @@
                     <li class="nav-separator"></li>
                     <li class="nav-section-title">FINANZAS</li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
-                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li><li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
                 </ul>
                 <ul id="menu-miembro" class="nav-links hidden">
                     <li class="nav-section-title">MI ESPACIO</li>
@@ -602,6 +602,96 @@
                         </div>
                     </div>
                 </section>
+                <section id="vista-egresos" class="view-section hidden">
+                <div class="page-header">
+                    <div><h1>Registro de Egresos</h1><p>Gastos y salidas de Casa de Vida</p></div>
+                </div>
+                <div class="finanzas-layout">
+                    <div class="form-card finanzas-card">
+                        <h3 class="form-title">Nuevo Egreso</h3>
+                        <form class="admin-form" onsubmit="registrarEgreso(event)">
+                            <div class="form-group">
+                                <label>Ítem</label>
+                                <select id="item-egreso" onchange="detectarCategoriaEgreso(this.value)">
+                                    <optgroup label="Infraestructura">
+                                        <option value="Arriendo local">Arriendo local</option>
+                                        <option value="Electricidad">Electricidad</option>
+                                        <option value="Agua">Agua</option>
+                                        <option value="Internet">Internet</option>
+                                        <option value="Gas">Gas</option>
+                                    </optgroup>
+                                    <optgroup label="Pastoral">
+                                        <option value="Aporte pastoral">Aporte pastoral</option>
+                                        <option value="Transporte pastoral">Transporte pastoral</option>
+                                    </optgroup>
+                                    <optgroup label="Operacional">
+                                        <option value="Materiales de oficina">Materiales de oficina</option>
+                                        <option value="Insumos café / té">Insumos café / té</option>
+                                        <option value="Impresiones">Impresiones</option>
+                                    </optgroup>
+                                    <optgroup label="Ministerial">
+                                        <option value="Ministerio de niños">Ministerio de niños</option>
+                                        <option value="Ministerio de jóvenes">Ministerio de jóvenes</option>
+                                        <option value="Escuela bíblica">Escuela bíblica</option>
+                                    </optgroup>
+                                    <optgroup label="Tecnología">
+                                        <option value="Software de Presentación">Software de Presentación</option>
+                                        <option value="Música y Pistas">Música y Pistas</option>
+                                        <option value="Hosting / Dominio">Hosting / Dominio</option>
+                                        <option value="Plataformas digitales">Plataformas digitales</option>
+                                    </optgroup>
+                                    <optgroup label="Otro">
+                                        <option value="Otro">Otro (especificar)</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="form-group" id="bloque-otro-egreso" style="display:none;">
+                                <label>Especifica el ítem</label>
+                                <input type="text" id="item-otro-egreso" placeholder="Describe el gasto...">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedor <span style="font-size:11px;color:var(--muted);">(opcional)</span></label>
+                                <input type="text" id="proveedor-egreso" placeholder="Ej: EasyWorship, Enel...">
+                            </div>
+                            <div class="form-group">
+                                <label>Categoría detectada</label>
+                                <input type="text" id="categoria-egreso" readonly style="background:var(--paper);color:var(--muted);">
+                            </div>
+                            <div class="form-group">
+                                <label>Monto (CLP $)</label>
+                                <input type="number" id="monto-egreso" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha</label>
+                                <input type="date" id="fecha-egreso">
+                            </div>
+                            <div class="form-group">
+                                <label>Observaciones</label>
+                                <textarea id="observaciones-egreso"></textarea>
+                            </div>
+                            <button type="submit" class="btn-action full-width">Registrar Egreso</button>
+                        </form>
+                    </div>
+                    <div class="finanzas-resumen">
+                        <div class="resumen-card"><span class="resumen-label">Este Mes</span><span class="resumen-monto" id="egreso-total">$0</span></div>
+                        <div class="resumen-card green"><span class="resumen-label">Infraestructura</span><span class="resumen-monto" id="egreso-infraestructura">$0</span></div>
+                        <div class="resumen-card blue"><span class="resumen-label">Pastoral</span><span class="resumen-monto" id="egreso-pastoral">$0</span></div>
+                        <div class="resumen-card amber"><span class="resumen-label">Tecnología</span><span class="resumen-monto" id="egreso-tecnologia">$0</span></div>
+                        <div class="table-card" style="grid-column:1/-1;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;">
+                                <h4 style="font-weight:700;font-size:14px;">Registros</h4>
+                                <span id="egresos-contador" style="font-size:12px;color:var(--muted);"></span>
+                            </div>
+                            <table class="data-table">
+                                <thead><tr><th>Ítem</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
+                                <tbody id="tabla-egresos">
+                                    <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
                 <section id="vista-finanzas-reporte" class="view-section hidden">
                     <div class="page-header"><h1>Reportes Financieros</h1><p>Próximamente con gráficos y exportación</p></div>
                     <div class="empty-state"><div class="empty-icon">📊</div><h3>Reportes visuales próximamente</h3><p>Gráficos de tendencias, comparativas mensuales y exportación a PDF/Excel.</p><span class="coming-soon">En desarrollo</span></div>

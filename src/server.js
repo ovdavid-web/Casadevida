@@ -24,6 +24,7 @@ app.use('/api/miembros', require('./routes/miembros'));
 app.use('/api/finanzas', require('./routes/finanzas'));
 app.use('/api/servicios', require('./routes/servicios'));
 app.use('/api/familias', require('./routes/familias'));
+app.use('/api/egresos', require('./routes/egresos'));
 
 // ============================================================
 // RUTA DE SALUD
@@ -50,5 +51,5 @@ app.get('/*path', (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
     console.log(`📁 Sirviendo archivos desde /public`);
-    console.log(`🔐 Rutas: /api/auth · /api/miembros · /api/finanzas · /api/servicios · /api/familias`);
+    console.log(`🔐 Rutas: /api/auth · /api/miembros · /api/finanzas · /api/servicios · /api/familias · /api/egresos`);
 });

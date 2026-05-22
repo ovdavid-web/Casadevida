@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'vista-miembros')         cargarMiembros();
         if (id === 'vista-finanzas')         cargarFinanzas();
         if (id === 'vista-finanzas-reporte') cargarReporte();
+        if (id === 'vista-egresos')          cargarEgresos();
     }
 
     // ============================================================
@@ -208,6 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleForm = id => {
         const f = $(id);
         if (f) f.classList.toggle('hidden');
+    };
+
+    window.abrirFormNuevoMiembro = () => {
+        cambiarTabDirectorio('miembros');
+        const f = $('form-nuevo-miembro');
+        if (f) f.classList.remove('hidden');
     };
 
     window.registrarMiembro = async e => {
@@ -462,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ============================================================
-    // MÓDULO FINANZAS — filtros, paginación y resumen dinámico
+    // MÓDULO FINANZAS
     // ============================================================
     let finanzasTodos  = [];
     let finanzasPagina = 1;
@@ -588,21 +595,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><button class="btn-table" onclick="verDetalleIngreso(${JSON.stringify(r).replace(/"/g, '&quot;')})">Ver</button></td>
             </tr>`).join('');
     }
-    
-    window.detectarServicio = fecha => {
-        if (!fecha) return;
-        const dia    = new Date(fecha + 'T12:00:00').getDay();
-        const fechaF = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
-        const nombres = {
-            3: `Reunión Mitad de Semana ${fechaF}`,
-            0: `Servicio General ${fechaF}`,
-            5: `Evento Especial ${fechaF}`,
-            6: `Evento Especial ${fechaF}`,
-        };
-        const nombre = nombres[dia] || `Fuera de Servicio ${fechaF}`;
-        const input  = $('nombre-servicio-detectado');
-        if (input) input.value = nombre;
-    };
+
     window.toggleAsociacion = async valor => {
         const bloque = $('bloque-asociacion');
         if (!bloque) return;
@@ -642,6 +635,22 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(err);
         }
     };
+
+    window.detectarServicio = fecha => {
+        if (!fecha) return;
+        const dia    = new Date(fecha + 'T12:00:00').getDay();
+        const fechaF = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const nombres = {
+            3: `Reunión Mitad de Semana ${fechaF}`,
+            0: `Servicio General ${fechaF}`,
+            5: `Evento Especial ${fechaF}`,
+            6: `Evento Especial ${fechaF}`,
+        };
+        const nombre = nombres[dia] || `Fuera de Servicio ${fechaF}`;
+        const input  = $('nombre-servicio-detectado');
+        if (input) input.value = nombre;
+    };
+
     window.registrarIngreso = async e => {
         e.preventDefault();
         const monto          = parseInt($('monto-ingreso')?.value ?? '0');
@@ -739,19 +748,201 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="font-weight:600;font-size:13px;">${creado}</div>
                     </div>
                 </div>
-                ${(r.tipo === 'Diezmo de Miembro' ) ? `
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
-                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORRESPONDE A</div>
-                        <div style="font-weight:600;font-size:14px;color:var(--text);">${r.asociado_nombre || 'Anónimo'}</div>
-                    </div>` : ''}
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
-                        <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div>
-                        <div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${obs}</div>
-                    </div>
+                ${r.tipo === 'Diezmo de Miembro' ? `
+                <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORRESPONDE A</div>
+                    <div style="font-weight:600;font-size:14px;color:var(--text);">${r.asociado_nombre || 'Anónimo'}</div>
+                </div>` : ''}
+                <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div>
+                    <div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${obs}</div>
+                </div>
             </div>`;
 
-        const modal = $('modal-detalle');
-        if (modal) modal.classList.remove('hidden');
+        $('modal-detalle').classList.remove('hidden');
+    };
+
+    // ============================================================
+    // MÓDULO EGRESOS
+    // ============================================================
+    const ITEMS_CATEGORIA = {
+        'Arriendo local':           'Infraestructura',
+        'Electricidad':             'Infraestructura',
+        'Agua':                     'Infraestructura',
+        'Internet':                 'Infraestructura',
+        'Gas':                      'Infraestructura',
+        'Aporte pastoral':          'Pastoral',
+        'Transporte pastoral':      'Pastoral',
+        'Materiales de oficina':    'Operacional',
+        'Insumos café / té':        'Operacional',
+        'Impresiones':              'Operacional',
+        'Ministerio de niños':      'Ministerial',
+        'Ministerio de jóvenes':    'Ministerial',
+        'Escuela bíblica':          'Ministerial',
+        'Software de Presentación': 'Tecnología',
+        'Música y Pistas':          'Tecnología',
+        'Hosting / Dominio':        'Tecnología',
+        'Plataformas digitales':    'Tecnología',
+        'Otro':                     'Otro',
+    };
+
+    const BADGE_COLOR = {
+        'Infraestructura': '#3b82f6',
+        'Pastoral':        '#8b5cf6',
+        'Operacional':     '#f59e0b',
+        'Ministerial':     '#10b981',
+        'Tecnología':      '#06b6d4',
+        'Otro':            '#6b7280',
+    };
+
+    window.detectarCategoriaEgreso = valor => {
+        const cat = ITEMS_CATEGORIA[valor] || 'Otro';
+        const input = $('categoria-egreso');
+        if (input) input.value = cat;
+        const bloqueOtro = $('bloque-otro-egreso');
+        if (bloqueOtro) bloqueOtro.style.display = valor === 'Otro' ? 'block' : 'none';
+    };
+
+    async function cargarEgresos() {
+        try {
+            const data    = await apiFetch('/api/egresos');
+            const egresos = data.egresos || [];
+
+            const contador = $('egresos-contador');
+            if (contador) contador.textContent = `${egresos.length} registros`;
+
+            const mesActual  = String(new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' })).getMonth() + 1).padStart(2, '0');
+            const anioActual = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' })).getFullYear().toString();
+            const delMes     = egresos.filter(r => r.fecha && r.fecha.startsWith(anioActual) && r.fecha.substring(5,7) === mesActual);
+
+            const totalMes = delMes.reduce((s,r) => s + Number(r.monto), 0);
+            const infra    = delMes.filter(r => r.categoria === 'Infraestructura').reduce((s,r) => s + Number(r.monto), 0);
+            const pastoral = delMes.filter(r => r.categoria === 'Pastoral').reduce((s,r) => s + Number(r.monto), 0);
+            const tech     = delMes.filter(r => r.categoria === 'Tecnología').reduce((s,r) => s + Number(r.monto), 0);
+
+            const eTotal = $('egreso-total');
+            const eInfra = $('egreso-infraestructura');
+            const ePast  = $('egreso-pastoral');
+            const eTech  = $('egreso-tecnologia');
+
+            if (eTotal) eTotal.textContent = `-$${totalMes.toLocaleString('es-CL')}`;
+            if (eInfra) eInfra.textContent = `-$${infra.toLocaleString('es-CL')}`;
+            if (ePast)  ePast.textContent  = `-$${pastoral.toLocaleString('es-CL')}`;
+            if (eTech)  eTech.textContent  = `-$${tech.toLocaleString('es-CL')}`;
+
+            const tbody = $('tabla-egresos');
+            if (!tbody) return;
+
+            if (egresos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No hay egresos registrados aún</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = egresos.map(r => `
+                <tr>
+                    <td>${r.proveedor ? `${r.item} <span style="font-size:11px;color:var(--muted);">(${r.proveedor})</span>` : r.item}</td>
+                    <td><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:${BADGE_COLOR[r.categoria] || '#6b7280'}22;color:${BADGE_COLOR[r.categoria] || '#6b7280'};font-weight:600;">${r.categoria}</span></td>
+                    <td style="color:#ef4444;font-weight:600;">-$${Number(r.monto).toLocaleString('es-CL')}</td>
+                    <td>${r.fecha ? r.fecha.split('-').reverse().join('/') : '—'}</td>
+                    <td><button class="btn-table" onclick="verDetalleEgreso(${JSON.stringify(r).replace(/"/g, '&quot;')})">Ver</button></td>
+                </tr>`).join('');
+
+        } catch (err) {
+            toast('Error cargando egresos', 'error');
+            console.error(err);
+        }
+    }
+
+    window.registrarEgreso = async e => {
+        e.preventDefault();
+        const itemSelect = $('item-egreso')?.value;
+        const itemOtro   = $('item-otro-egreso')?.value.trim();
+        const item       = itemSelect === 'Otro' ? (itemOtro || 'Otro') : itemSelect;
+        const categoria  = $('categoria-egreso')?.value || ITEMS_CATEGORIA[item] || 'Otro';
+        const proveedor  = $('proveedor-egreso')?.value.trim();
+        const monto      = parseInt($('monto-egreso')?.value ?? '0');
+        const fecha      = $('fecha-egreso')?.value;
+        const obs        = $('observaciones-egreso')?.value;
+
+        if (!monto || monto <= 0) return toast('Ingresa un monto válido', 'error');
+        if (!fecha)               return toast('Selecciona la fecha', 'error');
+
+        try {
+            const u = getUsuario();
+            await apiFetch('/api/egresos', {
+                method: 'POST',
+                body:   JSON.stringify({
+                    item,
+                    categoria,
+                    proveedor:      proveedor || null,
+                    monto,
+                    fecha,
+                    observaciones:  obs || null,
+                    registrado_por: u.id
+                })
+            });
+
+            toast('Egreso registrado ✓', 'success');
+            e.target.reset();
+            $('categoria-egreso').value = '';
+            $('bloque-otro-egreso').style.display = 'none';
+            cargarEgresos();
+
+        } catch (err) {
+            toast(err.message || 'Error al registrar', 'error');
+        }
+    };
+
+    window.verDetalleEgreso = r => {
+        const fecha  = r.fecha      ? r.fecha.split('-').reverse().join('/') : '—';
+        const creado = r.created_at ? (() => {
+            const d = new Date(r.created_at);
+            d.setHours(d.getHours() - 3);
+            return d.toLocaleString('es-CL');
+        })() : '—';
+
+        const contenido = $('modal-detalle-contenido');
+        if (!contenido) return;
+
+        contenido.innerHTML = `
+            <div style="display:grid;gap:12px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ÍTEM</div>
+                        <div style="font-weight:700;font-size:14px;">${r.item}</div>
+                    </div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MONTO</div>
+                        <div style="font-weight:700;font-size:14px;color:#ef4444;">-$${Number(r.monto).toLocaleString('es-CL')}</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CATEGORÍA</div>
+                        <div style="font-weight:600;font-size:14px;">${r.categoria}</div>
+                    </div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">PROVEEDOR</div>
+                        <div style="font-weight:600;font-size:14px;">${r.proveedor || '—'}</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA</div>
+                        <div style="font-weight:600;font-size:14px;">${fecha}</div>
+                    </div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">REGISTRADO</div>
+                        <div style="font-weight:600;font-size:13px;">${creado}</div>
+                    </div>
+                </div>
+                <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                    <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div>
+                    <div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${r.observaciones || 'Sin observaciones'}</div>
+                </div>
+            </div>`;
+
+        $('modal-detalle').classList.remove('hidden');
     };
 
     // ============================================================
@@ -812,11 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
         requestAnimationFrame(() => t.classList.add('show'));
         setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3200);
     }
-    window.abrirFormNuevoMiembro = () => {
-        cambiarTabDirectorio('miembros');
-        const f = $('form-nuevo-miembro');
-        if (f) f.classList.remove('hidden');
-    };
+
     // ============================================================
     // INIT
     // ============================================================

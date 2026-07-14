@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -389,7 +390,8 @@
                     <li class="nav-separator"></li>
                     <li class="nav-section-title">FINANZAS</li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
-                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li><li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
                 </ul>
                 <ul id="menu-miembro" class="nav-links hidden">
                     <li class="nav-section-title">MI ESPACIO</li>
@@ -693,8 +695,59 @@
                 </div>
             </section>
                 <section id="vista-finanzas-reporte" class="view-section hidden">
-                    <div class="page-header"><h1>Reportes Financieros</h1><p>Próximamente con gráficos y exportación</p></div>
-                    <div class="empty-state"><div class="empty-icon">📊</div><h3>Reportes visuales próximamente</h3><p>Gráficos de tendencias, comparativas mensuales y exportación a PDF/Excel.</p><span class="coming-soon">En desarrollo</span></div>
+                    <div class="page-header">
+                        <div><h1>Dashboard Financiero</h1><p>Resumen general de Casa de Vida</p></div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <select id="dash-anio" onchange="cargarReporte()" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);"></select>
+                            <select id="dash-mes" onchange="cargarReporte()" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);">
+                                <option value="">Todos los meses</option>
+                                <option value="01">Enero</option>
+                                <option value="02">Febrero</option>
+                                <option value="03">Marzo</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Mayo</option>
+                                <option value="06">Junio</option>
+                                <option value="07">Julio</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                            <button onclick="exportarExcel()" style="font-size:12px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px;">⬇ Exportar Excel</button>
+                        </div>
+                    </div>
+                    <div id="dash-alerta" class="hidden" style="background:#FAEEDA;border-left:3px solid #BA7517;border-radius:0 8px 8px 0;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#633806;margin-bottom:16px;">
+                        ⚠ <span id="dash-alerta-texto"></span>
+                    </div>
+                    <div class="stats-grid" style="margin-bottom:24px;">
+                        <div class="stat-card"><div class="stat-icon green">💰</div><div class="stat-info"><span class="stat-num" id="dash-total-ingresos">$0</span><span class="stat-label">Ingresos</span><span style="font-size:11px;color:var(--muted);" id="dash-comp-ingresos"></span></div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;">💸</div><div class="stat-info"><span class="stat-num" id="dash-total-egresos" style="color:#ef4444;">$0</span><span class="stat-label">Egresos</span><span style="font-size:11px;color:var(--muted);" id="dash-comp-egresos"></span></div></div>
+                        <div class="stat-card"><div class="stat-icon blue">📊</div><div class="stat-info"><span class="stat-num" id="dash-saldo">$0</span><span class="stat-label">Saldo del período</span></div></div>
+                        <div class="stat-card"><div class="stat-icon purple">📈</div><div class="stat-info"><span class="stat-num" id="dash-saldo-acumulado">$0</span><span class="stat-label">Saldo acumulado</span></div></div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;">
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Ingresos vs Egresos por mes</h3>
+                            <canvas id="chart-barras" height="120"></canvas>
+                        </div>
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Egresos por categoría</h3>
+                            <canvas id="chart-categorias" height="120"></canvas>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 10px;">
+                            <h4 style="font-weight:700;font-size:14px;">Movimientos del período</h4>
+                            <span id="dash-movimientos-total" style="font-size:12px;color:var(--muted);"></span>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Fecha</th><th>Categoría / Servicio</th></tr></thead>
+                            <tbody id="tabla-movimientos">
+                                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
                 <section id="vista-perfil-miembro" class="view-section hidden">
                     <div class="page-header"><h1>Mi Perfil</h1><p>Tu información personal y de membresía</p></div>

@@ -25,6 +25,7 @@ app.use('/api/finanzas', require('./routes/finanzas'));
 app.use('/api/servicios', require('./routes/servicios'));
 app.use('/api/familias', require('./routes/familias'));
 app.use('/api/egresos', require('./routes/egresos'));
+app.use('/api/eventos', require('./routes/eventos'));
 
 // ============================================================
 // RUTA DE SALUD

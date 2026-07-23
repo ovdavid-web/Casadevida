@@ -2,8 +2,10 @@ const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const supabase  = require('../supabase');
+const { verificarToken, verificarRol } = require('../middleware/auth');
 
 const router = express.Router();
+const ROLES_VALIDOS = ['superadmin', 'pastor', 'tesorero', 'oficial', 'lider', 'servidor', 'miembro'];
 
 // ============================================================
 // POST /api/auth/login
@@ -81,7 +83,7 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/crear-usuario
 // Crea un nuevo usuario (solo admin)
 // ============================================================
-router.post('/crear-usuario', async (req, res) => {
+router.post('/crear-usuario', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { nombre, correo, password, rol } = req.body;
 
@@ -92,6 +94,10 @@ router.post('/crear-usuario', async (req, res) => {
         }
 
         // Encriptar contraseña
+        if (!ROLES_VALIDOS.includes(rol)) {
+            return res.status(400).json({ error: 'Rol no válido' });
+        }
+
         const password_hash = await bcrypt.hash(password, 12);
 
         // Insertar en Supabase

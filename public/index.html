@@ -7,8 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="Styles.css">
     <script src="script.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -365,6 +366,7 @@
     <div id="vista-dashboard" class="hidden">
         <header class="dash-header">
             <div class="dash-logo">
+                <button id="btn-menu-movil" class="btn-menu-movil" type="button" aria-label="Abrir menú" aria-expanded="false">☰</button>
                 <img src="logo_cdv.png" alt="CDV" class="dash-logo-img">
                 <span class="dash-titulo">Casa de Vida</span>
                 <span class="dash-tag">Plataforma</span>
@@ -378,8 +380,9 @@
                 <button id="btn-cerrar-sesion" class="btn-cerrar">Cerrar sesión</button>
             </div>
         </header>
+        <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
         <div class="dash-layout">
-            <aside class="sidebar">
+            <aside id="sidebar-dashboard" class="sidebar">
                 <ul id="menu-admin" class="nav-links hidden">
                     <li class="nav-section-title">ADMINISTRACIÓN</li>
                     <li><button class="nav-btn active" data-target="vista-inicio-admin"><span class="nav-icon">⬛</span> Panel General</button></li>
@@ -389,7 +392,8 @@
                     <li class="nav-separator"></li>
                     <li class="nav-section-title">FINANZAS</li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
-                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li><li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
                 </ul>
                 <ul id="menu-miembro" class="nav-links hidden">
                     <li class="nav-section-title">MI ESPACIO</li>
@@ -397,28 +401,86 @@
                     <li><button class="nav-btn" data-target="vista-mis-asignaciones"><span class="nav-icon">🗓️</span> Mis Asignaciones</button></li>
                     <li><button class="nav-btn" data-target="vista-mis-aportes"><span class="nav-icon">💳</span> Mis Aportes</button></li>
                 </ul>
+                <div class="sidebar-mobile-footer">
+                    <button id="btn-cerrar-sesion-movil" class="btn-cerrar-movil" type="button">Cerrar sesión</button>
+                </div>
             </aside>
             <main class="main-content">
                 <section id="vista-inicio-admin" class="view-section hidden">
-                    <div class="page-header"><div><h1>Panel General</h1><p>Resumen de actividad de Casa de Vida</p></div></div>
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-icon blue">👥</div><div class="stat-info"><span class="stat-num">47</span><span class="stat-label">Miembros activos</span></div></div>
-                        <div class="stat-card"><div class="stat-icon amber">👤</div><div class="stat-info"><span class="stat-num">8</span><span class="stat-label">Visitas este mes</span></div></div>
-                        <div class="stat-card"><div class="stat-icon green">💰</div><div class="stat-info"><span class="stat-num">$342.500</span><span class="stat-label">Ingresos este mes</span></div></div>
-                        <div class="stat-card"><div class="stat-icon purple">🗓️</div><div class="stat-info"><span class="stat-num">3</span><span class="stat-label">Servicios programados</span></div></div>
+                    <div class="page-header agenda-page-header">
+                        <div><h1>Panel General</h1><p>Agenda y próximas actividades de Casa de Vida</p></div>
+                        <button class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nuevo evento</button>
                     </div>
-                    <div class="dashboard-2col">
-                        <div class="dash-widget">
-                            <h3 class="widget-title">Próximos Servicios</h3>
-                            <div class="servicio-row"><div class="servicio-fecha"><span class="sf-dia">MIÉ</span><span class="sf-num">11</span></div><div class="servicio-det"><strong>Mitad de Semana</strong><span>19:30 hrs · 12 voluntarios</span></div><span class="s-badge ok">Completo</span></div>
-                            <div class="servicio-row"><div class="servicio-fecha"><span class="sf-dia">DOM</span><span class="sf-num">15</span></div><div class="servicio-det"><strong>Servicio General</strong><span>11:00 hrs · 8/15 voluntarios</span></div><span class="s-badge warn">Incompleto</span></div>
+
+                    <div id="form-evento" class="form-card agenda-form hidden">
+                        <div class="agenda-form-titulo">
+                            <div><h3 id="form-evento-titulo" class="form-title">Nuevo evento</h3><p>Registra una actividad interna, congregacional o pública.</p></div>
+                            <button type="button" class="agenda-cerrar-form" onclick="cerrarFormularioEvento()" aria-label="Cerrar formulario">✕</button>
                         </div>
-                        <div class="dash-widget">
-                            <h3 class="widget-title">Últimas Visitas</h3>
-                            <div class="visita-row"><div class="visita-av">MA</div><div class="visita-info"><strong>María Alejandra F.</strong><span>Dom 8 Jun · Referida por Ana López</span></div></div>
-                            <div class="visita-row"><div class="visita-av">CR</div><div class="visita-info"><strong>Carlos R.</strong><span>Mié 4 Jun · Primera visita</span></div></div>
-                            <div class="visita-row"><div class="visita-av">LP</div><div class="visita-info"><strong>Laura & Pedro S.</strong><span>Dom 1 Jun · Pareja nueva</span></div></div>
+                        <form class="admin-form" onsubmit="guardarEvento(event)">
+                            <input id="evento-id" type="hidden">
+                            <div class="form-grid agenda-form-grid">
+                                <div class="form-group agenda-campo-ancho"><label>Título *</label><input id="evento-titulo" type="text" maxlength="150" required></div>
+                                <div class="form-group"><label>Tipo</label><select id="evento-tipo"><option>Actividad general</option><option>Servicio especial</option><option>Reunión</option><option>Conferencia</option><option>Fraternidad</option><option>Ministerial</option><option>Administrativo</option><option>Otro</option></select></div>
+                                <div class="form-group"><label>Organizador</label><input id="evento-organizador" type="text" maxlength="120" placeholder="Casa de Vida, fraternidad..."></div>
+                                <div class="form-group agenda-fecha-hora">
+                                    <label>Inicio *</label>
+                                    <input id="evento-fecha-inicio" type="date" required>
+                                    <div class="agenda-hora-control" aria-label="Hora de inicio">
+                                        <div class="agenda-hora-bloque"><span>Hora</span><div><button type="button" onclick="ajustarTiempoEvento('inicio','hora',-1)">−</button><input id="evento-hora-inicio" type="text" maxlength="2" value="12" inputmode="numeric" onchange="normalizarTiempoEvento('inicio')"><button type="button" onclick="ajustarTiempoEvento('inicio','hora',1)">+</button></div></div>
+                                        <strong>:</strong>
+                                        <div class="agenda-hora-bloque"><span>Minutos</span><div><button type="button" onclick="ajustarTiempoEvento('inicio','minuto',-5)">−</button><input id="evento-minuto-inicio" type="text" maxlength="2" value="00" inputmode="numeric" onchange="normalizarTiempoEvento('inicio')"><button type="button" onclick="ajustarTiempoEvento('inicio','minuto',5)">+</button></div></div>
+                                    </div>
+                                </div>
+                                <div class="form-group agenda-fecha-hora">
+                                    <label>Término</label>
+                                    <input id="evento-fecha-fin" type="date">
+                                    <div class="agenda-hora-control" aria-label="Hora de término">
+                                        <div class="agenda-hora-bloque"><span>Hora</span><div><button type="button" onclick="ajustarTiempoEvento('fin','hora',-1)">−</button><input id="evento-hora-fin" type="text" maxlength="2" value="13" inputmode="numeric" onchange="normalizarTiempoEvento('fin')"><button type="button" onclick="ajustarTiempoEvento('fin','hora',1)">+</button></div></div>
+                                        <strong>:</strong>
+                                        <div class="agenda-hora-bloque"><span>Minutos</span><div><button type="button" onclick="ajustarTiempoEvento('fin','minuto',-5)">−</button><input id="evento-minuto-fin" type="text" maxlength="2" value="00" inputmode="numeric" onchange="normalizarTiempoEvento('fin')"><button type="button" onclick="ajustarTiempoEvento('fin','minuto',5)">+</button></div></div>
+                                    </div>
+                                </div>
+                                <div class="form-group"><label>Ubicación</label><input id="evento-ubicacion" type="text" maxlength="180"></div>
+                                <div class="form-group"><label>Responsable</label><input id="evento-responsable" type="text" maxlength="120"></div>
+                                <div class="form-group"><label>Estado</label><select id="evento-estado"><option value="borrador">Borrador</option><option value="confirmado">Confirmado</option><option value="suspendido">Suspendido</option><option value="realizado">Realizado</option></select></div>
+                                <div class="form-group"><label>Visibilidad</label><select id="evento-visibilidad"><option value="interna">Interna</option><option value="congregacion">Congregación</option><option value="publica">Pública</option></select></div>
+                                <div class="form-group agenda-campo-ancho"><label>Descripción</label><textarea id="evento-descripcion" rows="3" placeholder="Información interna o general de la actividad"></textarea></div>
+                                <div class="form-group agenda-campo-ancho"><label>Descripción pública</label><textarea id="evento-descripcion-publica" rows="2" placeholder="Texto breve que podrá mostrarse en el home"></textarea></div>
+                                <div class="form-group agenda-campo-ancho agenda-miniatura-campo">
+                                    <label>Miniatura del evento <span>(opcional)</span></label>
+                                    <div class="agenda-miniatura-selector">
+                                        <div class="agenda-miniatura-preview"><img id="evento-miniatura-preview" class="hidden" alt="Vista previa de la miniatura"><span id="evento-miniatura-placeholder">Sin imagen</span></div>
+                                        <div><input id="evento-miniatura" type="file" accept="image/jpeg,image/png,image/webp"><p>Imagen cuadrada JPG, PNG o WebP · máximo 300 KB.</p></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="agenda-opciones">
+                                <label><input id="evento-publicar-home" type="checkbox"> Publicar en el home</label>
+                                <label><input id="evento-destacado" type="checkbox"> Evento destacado</label>
+                                <label><input id="evento-incluir-avisos" type="checkbox"> Incluir en avisos</label>
+                                <label><input id="evento-publicar-rrss" type="checkbox"> Preparar para RRSS</label>
+                            </div>
+                            <div class="form-actions">
+                                <button id="btn-guardar-evento" type="submit" class="btn-action">Guardar evento</button>
+                                <button type="button" class="btn-cancel" onclick="cerrarFormularioEvento()">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="table-card agenda-card">
+                        <div class="agenda-toolbar">
+                            <div><h3>Próximas actividades</h3><span id="agenda-contador">0 eventos</span></div>
+                            <select id="agenda-filtro" onchange="renderizarAgenda()" aria-label="Filtrar agenda">
+                                <option value="proximos">Próximos</option>
+                                <option value="todos">Todos</option>
+                                <option value="confirmado">Confirmados</option>
+                                <option value="borrador">Borradores</option>
+                                <option value="suspendido">Suspendidos</option>
+                                <option value="realizado">Realizados</option>
+                            </select>
                         </div>
+                        <div id="agenda-lista" class="agenda-lista"><p class="agenda-vacia">Cargando agenda...</p></div>
                     </div>
                 </section>
                 <section id="vista-miembros" class="view-section hidden">
@@ -436,22 +498,26 @@
                     <!-- TAB MIEMBROS -->
                     <div id="contenido-tab-miembros">
                         <div id="form-nuevo-miembro" class="form-card hidden">
-                            <h3 class="form-title">Registrar Nuevo Miembro</h3>
+                            <h3 id="form-miembro-titulo" class="form-title">Registrar Nuevo Miembro</h3>
                             <form class="admin-form" onsubmit="registrarMiembro(event)">
+                                <input id="miembro-id" type="hidden">
                                 <div class="form-grid">
-                                    <div class="form-group"><label>Nombre Completo *</label><input type="text" required></div>
-                                    <div class="form-group"><label>RUT</label><input type="text" placeholder="12.345.678-9"></div>
-                                    <div class="form-group"><label>Correo</label><input type="email"></div>
-                                    <div class="form-group"><label>Teléfono</label><input type="tel"></div>
-                                    <div class="form-group"><label>Fecha Bautismo</label><input type="date"></div>
-                                    <div class="form-group"><label>Área de Servicio</label><select><option>Alabanza y Adoración</option><option>Ujieres / Bienvenida</option><option>Niños</option><option>Multimedia / Audio</option><option>Administración</option><option>Sin asignar</option></select></div>
+                                    <div class="form-group"><label>Nombre Completo *</label><input id="miembro-nombre" type="text" required></div>
+                                    <div class="form-group"><label>RUT</label><input id="miembro-rut" type="text" placeholder="12.345.678-9"></div>
+                                    <div class="form-group"><label>Correo</label><input id="miembro-correo" type="email"></div>
+                                    <div class="form-group"><label>Teléfono</label><input id="miembro-telefono" type="tel"></div>
+                                    <div class="form-group span-2"><label>Dirección</label><input id="miembro-direccion" type="text"></div>
+                                    <div class="form-group"><label>Fecha Bautismo</label><input id="miembro-fecha-bautismo" type="date"></div>
+                                    <div class="form-group"><label>Fecha de Ingreso</label><input id="miembro-fecha-ingreso" type="date"></div>
+                                    <div class="form-group"><label>Área de Servicio</label><select id="miembro-area"><option>Alabanza y Adoración</option><option>Ujieres / Bienvenida</option><option>Niños</option><option>Multimedia / Audio</option><option>Administración</option><option>Sin asignar</option></select></div>
+                                    <div class="form-group"><label>Estado</label><select id="miembro-activo"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
                                 </div>
-                                <div class="form-actions"><button type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="toggleForm('form-nuevo-miembro')">Cancelar</button></div>
+                                <div class="form-actions"><button id="btn-guardar-miembro" type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="cerrarFormMiembro()">Cancelar</button></div>
                             </form>
                         </div>
                         <div class="table-card">
-                            <div class="table-header"><input type="search" placeholder="Buscar miembro..." class="search-input"><span class="table-count">0 miembros</span></div>
-                            <table class="data-table">
+                            <div class="table-header"><input id="buscar-miembro" type="search" placeholder="Buscar miembro..." class="search-input"><span class="table-count">0 miembros</span></div>
+                            <table class="data-table miembros-table">
                                 <thead><tr><th>Nombre</th><th>Área</th><th>Estado</th><th>Ingreso</th><th></th></tr></thead>
                                 <tbody>
                                     <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
@@ -462,7 +528,7 @@
 
                     <!-- TAB FAMILIAS -->
                     <div id="contenido-tab-familias" class="hidden">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                        <div class="familias-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                             <span style="font-size:14px;color:var(--muted);" id="familias-contador"></span>
                             <button class="btn-action" onclick="toggleForm('form-nueva-familia')">+ Nueva Familia</button>
                         </div>
@@ -550,9 +616,9 @@
                             <div class="resumen-card blue"><span class="resumen-label">Ofrendas</span><span class="resumen-monto">$0</span></div>
                             <div class="resumen-card amber"><span class="resumen-label">Donaciones</span><span class="resumen-monto">$0</span></div>
                             <div class="table-card" style="grid-column:1/-1;">
-                                <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;flex-wrap:wrap;gap:8px;">
+                                <div class="registros-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;flex-wrap:wrap;gap:8px;">
                                     <h4 style="font-weight:700;font-size:14px;">Registros</h4>
-                                    <div style="display:flex;gap:8px;align-items:center;">
+                                    <div class="filtros-finanzas" style="display:flex;gap:8px;align-items:center;">
                                         <select id="filtro-anio" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;"></select>
                                         <select id="filtro-mes" onchange="aplicarFiltros()" style="font-size:12px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;">
                                             <option value="">Todos</option>
@@ -585,13 +651,13 @@
                                         <span id="filtro-contador" style="font-size:12px;color:var(--muted);"></span>
                                     </div>
                                 </div>
-                                <table class="data-table">
+                                <table class="data-table ingresos-table">
                                     <thead><tr><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Servicio</th><th></th></tr></thead>
                                     <tbody id="tabla-ingresos">
                                         <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
                                     </tbody>
                                 </table>
-                                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);">
+                                <div class="paginacion-finanzas" style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);">
                                     <span id="pag-info" style="font-size:12px;color:var(--muted);"></span>
                                     <div style="display:flex;gap:6px;">
                                         <button id="btn-prev" onclick="cambiarPagina(-1)" style="font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text);">← Anterior</button>
@@ -675,14 +741,25 @@
                     <div class="finanzas-resumen">
                         <div class="resumen-card"><span class="resumen-label">Este Mes</span><span class="resumen-monto" id="egreso-total">$0</span></div>
                         <div class="resumen-card green"><span class="resumen-label">Infraestructura</span><span class="resumen-monto" id="egreso-infraestructura">$0</span></div>
-                        <div class="resumen-card blue"><span class="resumen-label">Pastoral</span><span class="resumen-monto" id="egreso-pastoral">$0</span></div>
+                        <div class="resumen-card blue resumen-categoria-consulta">
+                            <select id="egreso-categoria-resumen" class="resumen-categoria-select" onchange="actualizarResumenCategoriaEgreso()" aria-label="Consultar total por categoría">
+                                <option value="">Consultar categoría</option>
+                                <option value="Infraestructura">Infraestructura</option>
+                                <option value="Pastoral">Pastoral</option>
+                                <option value="Operacional">Operacional</option>
+                                <option value="Ministerial">Ministerial</option>
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                            <span class="resumen-monto" id="egreso-categoria-total">—</span>
+                        </div>
                         <div class="resumen-card amber"><span class="resumen-label">Tecnología</span><span class="resumen-monto" id="egreso-tecnologia">$0</span></div>
                         <div class="table-card" style="grid-column:1/-1;">
-                            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;">
+                            <div class="egresos-registros-header" style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;">
                                 <h4 style="font-weight:700;font-size:14px;">Registros</h4>
                                 <span id="egresos-contador" style="font-size:12px;color:var(--muted);"></span>
                             </div>
-                            <table class="data-table">
+                            <table class="data-table egresos-table">
                                 <thead><tr><th>Ítem</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th></th></tr></thead>
                                 <tbody id="tabla-egresos">
                                     <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
@@ -693,8 +770,63 @@
                 </div>
             </section>
                 <section id="vista-finanzas-reporte" class="view-section hidden">
-                    <div class="page-header"><h1>Reportes Financieros</h1><p>Próximamente con gráficos y exportación</p></div>
-                    <div class="empty-state"><div class="empty-icon">📊</div><h3>Reportes visuales próximamente</h3><p>Gráficos de tendencias, comparativas mensuales y exportación a PDF/Excel.</p><span class="coming-soon">En desarrollo</span></div>
+                    <div class="page-header">
+                        <div><h1>Dashboard Financiero</h1><p>Resumen general de Casa de Vida</p></div>
+                        <div class="dashboard-filtros" style="display:flex;gap:8px;align-items:center;">
+                            <select id="dash-anio" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);"></select>
+                            <select id="dash-mes" style="font-size:12px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);">
+                                <option value="">Todos los meses</option>
+                                <option value="01">Enero</option>
+                                <option value="02">Febrero</option>
+                                <option value="03">Marzo</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Mayo</option>
+                                <option value="06">Junio</option>
+                                <option value="07">Julio</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                            <button onclick="exportarExcel()" style="font-size:12px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--paper);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:6px;">⬇ Exportar Excel</button>
+                        </div>
+                    </div>
+                    <div id="dash-alerta" class="hidden" style="background:#FAEEDA;border-left:3px solid #BA7517;border-radius:0 8px 8px 0;padding:10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;color:#633806;margin-bottom:16px;">
+                        ⚠ <span id="dash-alerta-texto"></span>
+                    </div>
+                    <div class="stats-grid" style="margin-bottom:24px;">
+                        <div class="stat-card"><div class="stat-icon green">💰</div><div class="stat-info"><span class="stat-num" id="dash-total-ingresos">$0</span><span class="stat-label">Ingresos</span><span style="font-size:11px;color:var(--muted);" id="dash-comp-ingresos"></span></div></div>
+                        <div class="stat-card"><div class="stat-icon" style="background:#fef2f2;">💸</div><div class="stat-info"><span class="stat-num" id="dash-total-egresos" style="color:#ef4444;">$0</span><span class="stat-label">Egresos</span><span style="font-size:11px;color:var(--muted);" id="dash-comp-egresos"></span></div></div>
+                        <div class="stat-card"><div class="stat-icon blue">📊</div><div class="stat-info"><span class="stat-num" id="dash-saldo">$0</span><span class="stat-label">Saldo del período</span></div></div>
+                        <div class="stat-card"><div class="stat-icon purple">📈</div><div class="stat-info"><span class="stat-num" id="dash-saldo-acumulado">$0</span><span class="stat-label">Saldo acumulado</span></div></div>
+                    </div>
+                    <div class="dashboard-graficos" style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;">
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Ingresos vs Egresos por mes</h3>
+                            <canvas id="chart-barras" height="120"></canvas>
+                        </div>
+                        <div class="dash-widget">
+                            <h3 class="widget-title">Ingresos vs Egresos</h3>
+                            <div class="chart-categorias-container" style="position:relative;width:320px;height:320px;max-width:100%;margin:0 auto;">
+                                <canvas id="chart-categorias"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-card">
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 10px;">
+                            <h4 style="font-weight:700;font-size:14px;">Movimientos del período</h4>
+                            <span id="dash-movimientos-total" style="font-size:12px;color:var(--muted);"></span>
+                        </div>
+                        <div class="dashboard-tabla-scroll">
+                            <table class="data-table dashboard-movimientos-table">
+                                <thead><tr><th>Tipo</th><th>Descripción</th><th>Monto</th><th>Fecha</th><th>Categoría / Servicio</th></tr></thead>
+                                <tbody id="tabla-movimientos">
+                                    <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </section>
                 <section id="vista-perfil-miembro" class="view-section hidden">
                     <div class="page-header"><h1>Mi Perfil</h1><p>Tu información personal y de membresía</p></div>
@@ -725,7 +857,7 @@
     </div>
 <!-- Modal detalle ingreso -->
 <div id="modal-detalle" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;display:flex;align-items:center;justify-content:center;">
-    <div style="background:var(--surface);border-radius:16px;padding:32px;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <div class="modal-detalle-panel" style="background:var(--surface);border-radius:16px;padding:32px;min-width:340px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h3 style="font-family:'Montserrat',serif;font-size:18px;">Detalle del Registro</h3>
             <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
@@ -744,6 +876,24 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
             <button id="modal-fecha-cancelar" style="padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--paper);cursor:pointer;font-weight:600;font-size:14px;">Cancelar</button>
             <button id="modal-fecha-confirmar" style="padding:12px;border-radius:10px;border:none;background:#0f172a;color:white;cursor:pointer;font-weight:600;font-size:14px;">Registrar igual</button>
+        </div>
+    </div>
+</div>
+<!-- Modal motivo de suspensión de evento -->
+<div id="modal-suspender-evento" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="modal-suspender-titulo">
+    <div class="modal-agenda-panel">
+        <div class="modal-agenda-header">
+            <div><h3 id="modal-suspender-titulo">Suspender evento</h3><p id="modal-suspender-nombre"></p></div>
+            <button type="button" onclick="cerrarModalSuspensionEvento()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="form-group">
+            <label for="motivo-suspension-evento">Motivo de suspensión *</label>
+            <textarea id="motivo-suspension-evento" rows="4" maxlength="500" placeholder="Ej: cambio de fecha, condiciones climáticas..."></textarea>
+            <span class="modal-agenda-ayuda">Este motivo quedará visible solamente en la agenda administrativa.</span>
+        </div>
+        <div class="modal-agenda-actions">
+            <button type="button" class="btn-cancel" onclick="cerrarModalSuspensionEvento()">Cancelar</button>
+            <button id="btn-confirmar-suspension" type="button" class="btn-suspender-evento" onclick="confirmarSuspensionEvento()">Suspender evento</button>
         </div>
     </div>
 </div>

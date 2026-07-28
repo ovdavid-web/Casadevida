@@ -21,6 +21,7 @@ Estado: propuesta para revisión. Este documento todavía no autoriza cambios en
 | `pastor` | Gestión pastoral y administrativa amplia, sin editar contenido público ni elevar privilegios críticos |
 | `tesorero` | Gestión completa de finanzas y cuentas por pagar |
 | `oficial` | Funciones logísticas expresamente autorizadas |
+| `lider` | Coordinación de actividades e integrantes de los equipos que dirige |
 | `editor_contenido` | Gestión y publicación del contenido público y eventos |
 | `voluntario` | Acceso a convocatorias, reuniones y asignaciones del equipo de servicio |
 | `miembro` | Acceso personal y, en el futuro, a inscripciones educativas |
@@ -71,6 +72,25 @@ Ejemplos:
 
 El rol `voluntario` es acumulable. Un usuario puede tener simultáneamente
 `miembro` y `voluntario`, sin crear otra cuenta.
+
+El rol `lider` también es acumulable y siempre debe asociarse a uno o más
+equipos concretos. El rol entrega la capacidad de coordinación; la relación
+con el equipo limita dónde puede ejercerla.
+
+Un líder puede:
+
+- Ver las actividades autorizadas para sus roles y equipos.
+- Ver datos operativos limitados de los integrantes de su equipo.
+- Crear actividades internas para los equipos que dirige.
+- Editar o suspender esas actividades dejando auditoría.
+- Incluir esas actividades en los avisos semanales internos.
+
+Un líder no puede:
+
+- Crear actividades para equipos que no dirige.
+- Publicar actividades en el Home.
+- Acceder a finanzas, usuarios, roles o al directorio completo.
+- Ver información personal no necesaria para coordinar su equipo.
 
 Reglas de seguridad:
 

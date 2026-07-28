@@ -1,3 +1,5 @@
 .env
 node_modules/
 .codex-server.*.log
+.server-output.log
+.server-error.log

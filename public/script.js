@@ -35,11 +35,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     const vistaHome      = $('vista-home');
     const vistaLogin     = $('vista-login');
+    const vistaCreemos   = $('vista-creemos');
     const vistaDashboard = $('vista-dashboard');
     const navPublica     = $('nav-publica');
     const btnIrLogin     = $('btn-ir-login');
     const btnVolverHome  = $('btn-volver-home');
+    const btnVerCreencias = $('btn-ver-creencias');
+    const btnVolverDesdeCreemos = $('btn-volver-desde-creemos');
     const btnIngresar    = $('btn-ingresar');
+    const btnMenuPublico = $('btn-menu-publico');
+    const navMenuPublico = $('nav-menu-publico');
     const btnCerrar      = $('btn-cerrar-sesion');
     const btnCerrarMovil = $('btn-cerrar-sesion-movil');
     const btnMenuMovil   = $('btn-menu-movil');
@@ -50,19 +55,162 @@ document.addEventListener('DOMContentLoaded', () => {
     const nombreUsuario  = $('nombre-usuario-activo');
     const rolUsuario     = $('rol-usuario-activo');
     const userAvatar     = $('user-avatar-inicial');
+    let adminPublicoHabilitado = true;
+
+    // ============================================================
+    // CONFIGURACIÓN PÚBLICA
+    // ============================================================
+    async function cargarConfiguracionPublica() {
+        try {
+            const res = await fetch('/api/config');
+            if (!res.ok) throw new Error('No fue posible cargar la configuración');
+            const config = await res.json();
+            adminPublicoHabilitado = Boolean(config.adminEnabled);
+
+            if (adminPublicoHabilitado) {
+                show(btnIrLogin);
+                show($('footer-acceso-plataforma'));
+            } else {
+                hide(btnIrLogin);
+                hide($('footer-acceso-plataforma'));
+            }
+
+            if (config.donationsEnabled) {
+                show($('nav-donaciones'));
+                show($('seccion-donaciones'));
+            } else {
+                hide($('nav-donaciones'));
+                hide($('seccion-donaciones'));
+            }
+
+            config.contactFormEnabled
+                ? show($('form-contacto-publico'))
+                : hide($('form-contacto-publico'));
+        } catch (err) {
+            // Ante un error se mantienen ocultos los módulos públicos provisionales.
+            hide($('nav-donaciones'));
+            hide($('seccion-donaciones'));
+            hide($('form-contacto-publico'));
+        }
+    }
+
+    cargarConfiguracionPublica();
 
     // ============================================================
     // NAV
     // ============================================================
+    const cerrarMenuPublico = () => {
+        navMenuPublico?.classList.remove('open');
+        btnMenuPublico?.classList.remove('open');
+        btnMenuPublico?.setAttribute('aria-expanded', 'false');
+    };
+
+    btnMenuPublico?.addEventListener('click', () => {
+        const abierto = navMenuPublico?.classList.toggle('open');
+        btnMenuPublico.classList.toggle('open', Boolean(abierto));
+        btnMenuPublico.setAttribute('aria-expanded', String(Boolean(abierto)));
+    });
+
+    navMenuPublico?.querySelectorAll('a').forEach(enlace => {
+        enlace.addEventListener('click', cerrarMenuPublico);
+    });
+
+    const heroPublico = document.querySelector('.hero');
+    const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const heroCreemos = document.querySelector('.creemos-hero');
+
+    if (!movimientoReducido) {
+        const capasParallax = [
+            {
+                seccion: heroPublico,
+                elemento: heroPublico?.querySelector('.hero-visual'),
+                propiedad: '--hero-fondo-y',
+                velocidad: -0.10
+            },
+            {
+                seccion: heroCreemos,
+                elemento: heroCreemos,
+                propiedad: '--creemos-fondo-y',
+                velocidad: -0.10
+            }
+        ].filter(capa => capa.seccion && capa.elemento);
+
+        const medirParallax = () => {
+            capasParallax.forEach(capa => {
+                const posicion = capa.seccion.getBoundingClientRect();
+                if (posicion.bottom > 0 && posicion.top < window.innerHeight) {
+                    const recorrido = `${Math.max(0, -posicion.top) * capa.velocidad}px`;
+                    capa.elemento.style.setProperty(capa.propiedad, recorrido);
+                }
+            });
+        };
+
+        let parallaxPendiente = false;
+        const solicitarParallax = () => {
+            if (!parallaxPendiente) {
+                parallaxPendiente = true;
+                window.requestAnimationFrame(() => {
+                    medirParallax();
+                    parallaxPendiente = false;
+                });
+            }
+        };
+
+        window.addEventListener('scroll', solicitarParallax, { passive: true });
+        window.addEventListener('resize', solicitarParallax, { passive: true });
+        medirParallax();
+    }
+
     btnIrLogin.addEventListener('click', () => {
-        show(vistaLogin); hide(vistaHome);
+        cerrarMenuPublico();
+        show(vistaLogin); hide(vistaHome); hide(vistaCreemos);
         show(btnVolverHome); hide(btnIrLogin);
     });
 
-    btnVolverHome.addEventListener('click', () => {
-        show(vistaHome); hide(vistaLogin);
-        hide(btnVolverHome); show(btnIrLogin);
+    const volverAlHomePublico = (actualizarHistorial = true) => {
+        cerrarMenuPublico();
+        show(vistaHome);
+        hide(vistaLogin);
+        hide(vistaCreemos);
+        hide(btnVolverHome);
+        adminPublicoHabilitado ? show(btnIrLogin) : hide(btnIrLogin);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (actualizarHistorial && window.location.hash === '#creemos') {
+            history.pushState(null, '', `${window.location.pathname}${window.location.search}`);
+        }
+    };
+
+    const abrirVistaCreemos = (actualizarHistorial = true) => {
+        cerrarMenuPublico();
+        hide(vistaHome);
+        hide(vistaLogin);
+        show(vistaCreemos);
+        show(btnVolverHome);
+        hide(btnIrLogin);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        if (actualizarHistorial && window.location.hash !== '#creemos') {
+            history.pushState(null, '', '#creemos');
+        }
+    };
+
+    btnVerCreencias?.addEventListener('click', () => abrirVistaCreemos());
+    btnVolverDesdeCreemos?.addEventListener('click', () => volverAlHomePublico());
+    btnVolverHome.addEventListener('click', () => volverAlHomePublico());
+
+    window.irAlInicioPublico = () => volverAlHomePublico();
+
+    window.addEventListener('popstate', () => {
+        window.location.hash === '#creemos'
+            ? abrirVistaCreemos(false)
+            : volverAlHomePublico(false);
     });
+
+    if (window.location.hash === '#creemos' && !getToken()) {
+        abrirVistaCreemos(false);
+    }
 
     // ============================================================
     // LOGIN
@@ -122,8 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cerrarSesion = () => {
         sessionStorage.clear();
         cerrarMenuMovil();
-        hide(vistaDashboard); show(navPublica); show(vistaHome);
-        show(btnIrLogin); hide(btnVolverHome);
+        hide(vistaDashboard); hide(vistaCreemos); show(navPublica); show(vistaHome);
+        adminPublicoHabilitado ? show(btnIrLogin) : hide(btnIrLogin);
+        hide(btnVolverHome);
     };
 
     btnCerrar.addEventListener('click', cerrarSesion);
@@ -173,8 +322,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // PANEL GENERAL — AGENDA
     // ============================================================
     let eventosAgenda = [];
+    let cuentasPorPagar = [];
     let miniaturaPreviewLocal = null;
     let eventoPendienteSuspension = null;
+    let cuentaPendientePago = null;
 
     const mostrarPreviewMiniatura = url => {
         const imagen = $('evento-miniatura-preview');
@@ -276,19 +427,219 @@ document.addEventListener('DOMContentLoaded', () => {
         month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
     }).format(new Date(valor));
 
+    const esEventoProximo = (evento, ahora = new Date()) => {
+        const referenciaFin = evento.fecha_fin
+            ? new Date(evento.fecha_fin)
+            : new Date(new Date(evento.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
+        return referenciaFin >= ahora && !['suspendido', 'realizado'].includes(evento.estado);
+    };
+
     async function cargarAgenda() {
         const lista = $('agenda-lista');
         if (!lista) return;
         lista.innerHTML = '<p class="agenda-vacia">Cargando agenda...</p>';
-        try {
-            const data = await apiFetch('/api/eventos');
-            eventosAgenda = data.eventos || [];
+
+        const [resultadoEventos, resultadoMiembros, resultadoCuentas] = await Promise.allSettled([
+            apiFetch('/api/eventos'),
+            apiFetch('/api/miembros'),
+            apiFetch('/api/cuentas-pagar')
+        ]);
+
+        if (resultadoEventos.status === 'fulfilled') {
+            eventosAgenda = resultadoEventos.value.eventos || [];
+            $('panel-actividades-futuras').textContent = eventosAgenda.filter(evento => esEventoProximo(evento)).length;
             window.renderizarAgenda();
-        } catch (err) {
-            lista.innerHTML = `<p class="agenda-vacia">${sanitizar(err.message)}</p>`;
+        } else {
+            $('panel-actividades-futuras').textContent = '—';
+            lista.innerHTML = `<p class="agenda-vacia">${sanitizar(resultadoEventos.reason.message)}</p>`;
             toast('No fue posible cargar la agenda', 'error');
         }
+
+        if (resultadoMiembros.status === 'fulfilled') {
+            const miembros = resultadoMiembros.value.miembros || [];
+            $('panel-miembros-activos').textContent = miembros.filter(miembro => miembro.activo !== false).length;
+        } else {
+            $('panel-miembros-activos').textContent = '—';
+        }
+
+        if (resultadoCuentas.status === 'fulfilled') {
+            cuentasPorPagar = resultadoCuentas.value.cuentas || [];
+            renderizarCuentasPorPagar();
+        } else {
+            cuentasPorPagar = [];
+            $('panel-cuentas-por-vencer').textContent = '—';
+            $('panel-cuentas-vencidas').textContent = '—';
+            $('cuentas-pagar-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las cuentas por pagar.</p>';
+        }
     }
+
+    const hoyChileTexto = () => new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Santiago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    }).format(new Date());
+
+    const diasHastaVencimiento = fecha => {
+        const hoy = new Date(`${hoyChileTexto()}T12:00:00`);
+        const vencimiento = new Date(`${fecha}T12:00:00`);
+        return Math.round((vencimiento - hoy) / (24 * 60 * 60 * 1000));
+    };
+
+    const renderizarCuentasPorPagar = () => {
+        const pendientes = cuentasPorPagar.filter(cuenta => cuenta.estado === 'pendiente');
+        const pagosSinEgreso = cuentasPorPagar.filter(cuenta =>
+            cuenta.estado === 'pagada' && !cuenta.egreso_id
+        );
+        const cuentasAccionables = [...pagosSinEgreso, ...pendientes];
+        const vencidas = pendientes.filter(cuenta => diasHastaVencimiento(cuenta.fecha_vencimiento) < 0);
+        const porVencer = pendientes.filter(cuenta => {
+            const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
+            return dias >= 0 && dias <= 7;
+        });
+
+        $('panel-cuentas-por-vencer').textContent = porVencer.length;
+        $('panel-cuentas-vencidas').textContent = vencidas.length;
+        $('cuentas-pagar-contador').textContent = pagosSinEgreso.length
+            ? `${pagosSinEgreso.length} ${pagosSinEgreso.length === 1 ? 'pago requiere egreso' : 'pagos requieren egreso'}`
+            : pendientes.length
+                ? `${pendientes.length} ${pendientes.length === 1 ? 'cuenta pendiente' : 'cuentas pendientes'}`
+                : 'Sin cuentas pendientes';
+
+        const lista = $('cuentas-pagar-lista');
+        if (!cuentasAccionables.length) {
+            lista.innerHTML = '<p class="agenda-vacia">No hay cuentas pendientes.</p>';
+            return;
+        }
+
+        lista.innerHTML = cuentasAccionables.slice(0, 6).map(cuenta => {
+            const requiereEgreso = cuenta.estado === 'pagada' && !cuenta.egreso_id;
+            const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
+            const clase = requiereEgreso ? 'proxima' : (dias < 0 ? 'vencida' : (dias <= 7 ? 'proxima' : ''));
+            const estadoFecha = requiereEgreso
+                ? 'Pago sin egreso asociado'
+                : dias < 0
+                    ? `Vencida hace ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'día' : 'días'}`
+                    : dias === 0
+                        ? 'Vence hoy'
+                        : `Vence en ${dias} ${dias === 1 ? 'día' : 'días'}`;
+            const monto = cuenta.monto
+                ? ` · $${Number(cuenta.monto).toLocaleString('es-CL')}`
+                : '';
+
+            return `
+                <article class="cuenta-pagar-item">
+                    <div class="cuenta-pagar-info">
+                        <strong>${sanitizar(cuenta.nombre)}</strong>
+                        <span>${sanitizar(cuenta.categoria)}${cuenta.proveedor ? ` · ${sanitizar(cuenta.proveedor)}` : ''}${monto}</span>
+                    </div>
+                    <div class="cuenta-pagar-vence ${clase}">
+                        <strong>${cuenta.fecha_vencimiento.split('-').reverse().join('/')}</strong>
+                        <span>${estadoFecha}</span>
+                    </div>
+                    <div class="cuenta-pagar-acciones">
+                        <button type="button" class="btn-table" onclick="abrirModalConfirmarPago('${cuenta.id}')">${requiereEgreso ? 'Registrar egreso' : 'Marcar pagada'}</button>
+                    </div>
+                </article>`;
+        }).join('');
+    };
+
+    window.toggleFormCuentaPagar = (abrir) => {
+        const formulario = $('form-cuenta-pagar');
+        const debeAbrir = typeof abrir === 'boolean'
+            ? abrir
+            : formulario.classList.contains('hidden');
+        formulario.classList.toggle('hidden', !debeAbrir);
+        if (debeAbrir) {
+            if (!$('cuenta-pagar-vencimiento').value) {
+                $('cuenta-pagar-vencimiento').value = hoyChileTexto();
+            }
+            $('cuenta-pagar-nombre').focus();
+        }
+    };
+
+    window.guardarCuentaPagar = async event => {
+        event.preventDefault();
+        const boton = $('btn-guardar-cuenta-pagar');
+        const monto = $('cuenta-pagar-monto').value;
+        const body = {
+            nombre: $('cuenta-pagar-nombre').value.trim(),
+            proveedor: $('cuenta-pagar-proveedor').value.trim() || null,
+            categoria: $('cuenta-pagar-categoria').value,
+            monto: monto ? Number(monto) : null,
+            fecha_vencimiento: $('cuenta-pagar-vencimiento').value,
+            frecuencia: $('cuenta-pagar-frecuencia').value,
+            observaciones: $('cuenta-pagar-observaciones').value.trim() || null
+        };
+
+        try {
+            boton.disabled = true;
+            boton.textContent = 'Guardando...';
+            await apiFetch('/api/cuentas-pagar', {
+                method: 'POST',
+                body: JSON.stringify(body)
+            });
+            event.target.reset();
+            window.toggleFormCuentaPagar(false);
+            toast('Cuenta registrada correctamente');
+            await cargarAgenda();
+        } catch (err) {
+            toast(err.message || 'No fue posible registrar la cuenta', 'error');
+        } finally {
+            boton.disabled = false;
+            boton.textContent = 'Guardar cuenta';
+        }
+    };
+
+    window.abrirModalConfirmarPago = id => {
+        cuentaPendientePago = cuentasPorPagar.find(cuenta => cuenta.id === id) || null;
+        if (!cuentaPendientePago) return;
+        $('modal-pago-nombre').textContent = cuentaPendientePago.nombre;
+        $('modal-pago-monto').value = cuentaPendientePago.monto
+            ? Math.round(Number(cuentaPendientePago.monto))
+            : '';
+        $('modal-pago-ayuda').textContent = cuentaPendientePago.estado === 'pagada'
+            ? 'Este pago fue confirmado anteriormente sin generar un egreso. Al continuar se completará el registro financiero.'
+            : 'Al confirmar se registrará inmediatamente el egreso financiero.';
+        show($('modal-confirmar-pago'));
+        setTimeout(() => $('modal-pago-monto').focus(), 0);
+    };
+
+    window.cerrarModalConfirmarPago = () => {
+        cuentaPendientePago = null;
+        hide($('modal-confirmar-pago'));
+    };
+
+    window.confirmarPagoCuenta = async () => {
+        if (!cuentaPendientePago) return;
+        const monto = Number($('modal-pago-monto').value);
+        if (!Number.isFinite(monto) || monto <= 0) {
+            toast('Confirma un monto mayor a 0', 'error');
+            $('modal-pago-monto').focus();
+            return;
+        }
+        const boton = $('btn-confirmar-pago');
+        try {
+            boton.disabled = true;
+            boton.textContent = 'Guardando...';
+            await apiFetch(`/api/cuentas-pagar/${cuentaPendientePago.id}/pagar`, {
+                method: 'PATCH',
+                body: JSON.stringify({ monto })
+            });
+            toast('Pago confirmado y egreso registrado');
+            window.cerrarModalConfirmarPago();
+            await cargarAgenda();
+        } catch (err) {
+            toast(err.message || 'No fue posible actualizar la cuenta', 'error');
+        } finally {
+            boton.disabled = false;
+            boton.textContent = 'Confirmar pago';
+        }
+    };
+
+    $('modal-confirmar-pago')?.addEventListener('click', event => {
+        if (event.target === $('modal-confirmar-pago')) window.cerrarModalConfirmarPago();
+    });
 
     window.renderizarAgenda = () => {
         const lista = $('agenda-lista');
@@ -299,10 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventos = eventosAgenda.filter(evento => {
             if (filtro === 'todos') return true;
             if (filtro !== 'proximos') return evento.estado === filtro;
-            const referenciaFin = evento.fecha_fin
-                ? new Date(evento.fecha_fin)
-                : new Date(new Date(evento.fecha_inicio).getTime() + 24 * 60 * 60 * 1000);
-            return referenciaFin >= ahora && !['suspendido', 'realizado'].includes(evento.estado);
+            return esEventoProximo(evento, ahora);
         });
 
         $('agenda-contador').textContent = `${eventos.length} ${eventos.length === 1 ? 'evento' : 'eventos'}`;
@@ -968,6 +1316,8 @@ document.addEventListener('DOMContentLoaded', () => {
             bloque.classList.add('hidden');
             $('select-asociacion').innerHTML = '<option value="">Selecciona...</option>';
         }
+        const fechaServicio = $('fecha-servicio')?.value;
+        if (fechaServicio) window.detectarServicio(fechaServicio);
     };
 
     window.cargarOpcionesAsociacion = async tipo => {
@@ -994,11 +1344,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.detectarServicio = fecha => {
         if (!fecha) return;
-        const dia    = new Date(fecha + 'T12:00:00').getDay();
-        const fechaF = new Date(fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const fechaLocal = new Date(fecha + 'T12:00:00');
+        const dia    = fechaLocal.getDay();
+        const fechaF = fechaLocal.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+        const esPrimerDomingo = dia === 0 && fechaLocal.getDate() <= 7;
+        const esDiezmo = $('tipo-ingreso')?.value === 'Diezmo de Miembro';
+        const mesActual = MESES[fechaLocal.getMonth() + 1];
         const nombres = { 3: `Reunión Mitad de Semana ${fechaF}`, 0: `Servicio General ${fechaF}`, 5: `Evento Especial ${fechaF}`, 6: `Evento Especial ${fechaF}` };
         const input  = $('nombre-servicio-detectado');
-        if (input) input.value = nombres[dia] || `Fuera de Servicio ${fechaF}`;
+        if (input) {
+            input.value = esPrimerDomingo && esDiezmo
+                ? `Diezmo de Santa Cena · ${mesActual} ${fechaLocal.getFullYear()}`
+                : nombres[dia] || `Fuera de Servicio ${fechaF}`;
+        }
     };
 
     window.registrarIngreso = async e => {
@@ -1466,7 +1824,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // SCROLL
     // ============================================================
-    window.scrollToSection = id => { const el = $(id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+    window.scrollToSection = id => {
+        const mostrarSeccion = () => {
+            const el = $(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+
+        if (!vistaCreemos?.classList.contains('hidden')) {
+            volverAlHomePublico(false);
+            history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+            window.requestAnimationFrame(mostrarSeccion);
+            return;
+        }
+
+        mostrarSeccion();
+    };
 
     // ============================================================
     // TOASTS

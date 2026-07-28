@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="Styles.css">
+    <link rel="icon" type="image/png" href="favicon-cdv.png">
     <script src="script.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 </head>
@@ -15,19 +16,28 @@
 
     <!-- ===================== NAV ===================== -->
     <nav id="nav-publica">
-        <div class="logo">
-            <img src="logo_cdv.png" alt="Casa de Vida" class="nav-logo">
-        </div>
-        <div class="nav-links-pub">
+        <a class="logo-publico" href="#" onclick="irAlInicioPublico(); return false;" aria-label="Ir al inicio">
+            <img src="logo-cdv-negro.png" alt="Casa de Vida" class="nav-logo nav-logo-completo">
+            <img src="isotipo-cdv-negro.png" alt="" class="nav-logo nav-logo-isotipo" aria-hidden="true">
+        </a>
+        <div id="nav-menu-publico" class="nav-links-pub">
+            <a href="#" onclick="irAlInicioPublico(); return false;">Inicio</a>
             <a href="#" onclick="scrollToSection('seccion-nosotros'); return false;">Quiénes somos</a>
             <a href="#" onclick="scrollToSection('seccion-grupos'); return false;">Grupos</a>
             <a href="#" onclick="scrollToSection('seccion-horarios'); return false;">Horarios</a>
-            <a href="#" onclick="scrollToSection('seccion-donaciones'); return false;">Donar</a>
+            <a id="nav-donaciones" href="#" onclick="scrollToSection('seccion-donaciones'); return false;">Donar</a>
             <a href="#" onclick="scrollToSection('seccion-contacto'); return false;">Contacto</a>
         </div>
         <div class="nav-buttons">
             <button id="btn-volver-home" class="btn-outline hidden">← Volver</button>
-            <button id="btn-ir-login" class="btn-primary">Acceso Plataforma</button>
+            <button id="btn-ir-login" class="btn-login-icon" type="button" aria-label="Acceso administrativo" title="Acceso administrativo">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0"/>
+                </svg>
+            </button>
+            <button id="btn-menu-publico" class="btn-menu-publico" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="nav-menu-publico">
+                <span></span><span></span>
+            </button>
         </div>
     </nav>
 
@@ -36,29 +46,47 @@
 
         <!-- HERO -->
         <header class="hero">
-            <div class="hero-noise"></div>
-            <div class="hero-content">
-                <p class="hero-eyebrow">Iglesia Casa de Vida · La Florida, Santiago</p>
-                <h1 class="hero-title">Un lugar donde<br><em>la fe cobra vida</em></h1>
-                <p class="hero-tagline">Somos una familia espiritual cristocéntrica.<br>Todos son bienvenidos, tal como son.</p>
-                <div class="hero-cta">
-                    <button class="btn-hero-primary" onclick="scrollToSection('seccion-horarios')">Visítanos este domingo</button>
-                    <button class="btn-hero-ghost" onclick="scrollToSection('seccion-nosotros')">Conócenos</button>
-                </div>
-                <div class="hero-pills">
-                    <div class="hero-pill">
-                        <span class="pill-dot"></span>
-                        Domingo 11:00 · Servicio General
-                    </div>
-                    <div class="hero-pill">
-                        <span class="pill-dot red"></span>
-                        Live Stream cada domingo por Facebook
-                    </div>
+            <div class="hero-visual" aria-hidden="true">
+                <div class="hero-placeholder-marca">
+                    <img src="isotipo-cdv-blanco.png" alt="">
                 </div>
             </div>
-            <div class="hero-scroll">
-                <div class="scroll-line"></div>
-                <span>Descubre más</span>
+            <div class="hero-overlay" aria-hidden="true"></div>
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <p class="hero-eyebrow">Iglesia Casa de Vida <span></span> La Florida, Santiago</p>
+                    <h1 class="hero-title">Casa de Vida.<br><em>Un lugar de bendición.</em></h1>
+                    <p class="hero-tagline">Somos una comunidad cristocéntrica, cercana y abierta. Una casa donde puedes conocer a Jesús, crecer y caminar junto a otros.</p>
+                    <div class="hero-cta">
+                        <button class="btn-hero-primary" onclick="scrollToSection('seccion-horarios')">Planifica tu visita</button>
+                        <button class="btn-hero-ghost" onclick="scrollToSection('seccion-nosotros')">Conoce nuestra casa</button>
+                    </div>
+                </div>
+                <aside class="hero-reunion" aria-label="Información de la reunión principal">
+                    <p class="hero-reunion-label">Nos encontramos</p>
+                    <div class="hero-reunion-servicio">
+                        <div class="hero-reunion-dia">
+                            <span>Domingo</span>
+                            <strong>11:00</strong>
+                        </div>
+                        <p>Servicio General</p>
+                    </div>
+                    <div class="hero-reunion-servicio">
+                        <div class="hero-reunion-dia">
+                            <span>Miércoles</span>
+                            <strong>19:30</strong>
+                        </div>
+                        <p>Reunión de mitad de semana</p>
+                    </div>
+                    <a href="#" onclick="scrollToSection('seccion-horarios'); return false;">Santa Julia 833, La Florida <span>↗</span></a>
+                </aside>
+            </div>
+            <div class="hero-bottom">
+                <span>Casa de Vida</span>
+                <button type="button" onclick="scrollToSection('seccion-nosotros')" aria-label="Seguir explorando">
+                    <span>Descubre nuestra comunidad</span>
+                    <strong>↓</strong>
+                </button>
             </div>
         </header>
 
@@ -67,10 +95,13 @@
             <div class="container">
                 <div class="nosotros-grid">
                     <div class="nosotros-texto">
-                        <p class="eyebrow">Nuestra historia</p>
+                        <p class="eyebrow">Nuestra identidad</p>
                         <h2>Somos Casa de Vida</h2>
-                        <p>Una comunidad de fe cristocéntrica en el corazón de La Florida. Bajo la guía de nuestros pastores <strong>Rodolfo Ormeño y Vania Ampuero</strong>, somos una familia espiritual donde cada persona es bienvenida a experimentar la gracia y el amor transformador de Jesucristo.</p>
-                        <p style="margin-top:14px;">Venimos de una formación en Asambleas de Dios y hoy somos una iglesia independiente, apasionada por Dios y por las personas de nuestra comunidad.</p>
+                        <p>Somos una comunidad cristiana centrada en Jesucristo, guiada por la Palabra de Dios y por Su Espíritu Santo, quien transforma nuestras vidas y nos capacita para servir. Creemos que el evangelio sigue cambiando vidas, restaurando familias y dando esperanza a toda persona que pone su confianza en Cristo.</p>
+                        <p style="margin-top:14px;">Nuestro propósito es hacer discípulos de Jesucristo que vivan para la gloria de Dios, creciendo en Su Palabra, reflejando Su carácter y sirviendo con los dones que Él ha concedido para la edificación de Su Iglesia. Más que un lugar al que asistir, somos una familia espiritual donde juntos crecemos en la fe, servimos con amor y vivimos para la gloria de Dios.</p>
+                        <button id="btn-ver-creencias" class="btn-ver-creencias" type="button">
+                            Lo que creemos <span>→</span>
+                        </button>
                         <div class="pastores-tags">
                             <div class="pastor-item">
                                 <div class="pastor-av">RO</div>
@@ -82,23 +113,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="creencias-col">
-                        <h3>En qué creemos</h3>
-                        <div class="creencia-item">
-                            <span class="creencia-num">01</span>
-                            <div><strong>Gracia para todos</strong><p>El sacrificio de Jesús provee salvación para toda la humanidad, respondida en libertad.</p></div>
-                        </div>
-                        <div class="creencia-item">
-                            <span class="creencia-num">02</span>
-                            <div><strong>La Palabra de Dios</strong><p>La Biblia es nuestra guía absoluta, inspirada por Dios y viva para cada generación.</p></div>
-                        </div>
-                        <div class="creencia-item">
-                            <span class="creencia-num">03</span>
-                            <div><strong>Transformación continua</strong><p>El Espíritu Santo nos santifica y transforma para vivir nuestro propósito en Cristo.</p></div>
-                        </div>
-                        <div class="creencia-item">
-                            <span class="creencia-num">04</span>
-                            <div><strong>Comunidad y Propósito</strong><p>La iglesia es el cuerpo de Cristo, diseñada para apoyarnos y servir a la sociedad.</p></div>
+                    <div class="nosotros-foto-placeholder" aria-label="Espacio reservado para fotografía de Casa de Vida">
+                        <img src="isotipo-cdv-blanco.png" alt="" aria-hidden="true">
+                        <div>
+                            <span>Nuestra comunidad</span>
+                            <p>Este espacio recibirá una fotografía real de Casa de Vida.</p>
                         </div>
                     </div>
                 </div>
@@ -109,20 +128,31 @@
         <section class="section-mision">
             <div class="container">
                 <div class="mision-grid">
-                    <div class="mision-card">
-                        <span class="mi">✦</span>
-                        <h3>Nuestra Misión</h3>
-                        <p>Llevar el Evangelio de Jesucristo de manera práctica y relevante, invitando a cada persona a responder libremente a Su gracia y equipándolos para vivir su propósito.</p>
+                    <div class="mision-imagen-placeholder" aria-label="Espacio reservado para una fotografía de Casa de Vida">
+                        <img src="isotipo-cdv-blanco.png" alt="" aria-hidden="true">
+                        <div>
+                            <span>Casa de Vida</span>
+                            <p>Una iglesia cercana, centrada en Jesús.</p>
+                        </div>
                     </div>
-                    <div class="mision-card dark">
-                        <span class="mi gold">◈</span>
-                        <h3>Nuestra Visión</h3>
-                        <p>Ser una iglesia vibrante, acogedora y guiada por el Espíritu Santo, que forme discípulos arraigados en la Palabra y que impacten su entorno con el amor de Cristo.</p>
-                    </div>
-                    <div class="mision-card border-accent">
-                        <span class="mi">⬡</span>
-                        <h3>Nuestros Valores</h3>
-                        <p>Fe activa, comunidad auténtica, servicio desinteresado, gracia extendida a todos y crecimiento continuo guiado por el Espíritu Santo.</p>
+                    <div class="mision-contenido">
+                        <article class="mision-card">
+                            <span class="mision-numero">01</span>
+                            <div>
+                                <h3>Nuestra misión</h3>
+                                <p>Llevar el mensaje de Jesucristo a cada persona, invitándola a conocerle, creer en Él y vivir conforme a Su Palabra.</p>
+                                <p>Nuestro deseo es que cada seguidor de Jesús no se limite a escuchar el evangelio, sino que su fe sea evidente y transforme su manera de vivir.</p>
+                            </div>
+                        </article>
+                        <article class="mision-card">
+                            <span class="mision-numero">02</span>
+                            <div>
+                                <h3>Nuestra visión</h3>
+                                <p>Anhelamos ser una iglesia cercana, donde cada persona encuentre un lugar para conocer a Jesús, crecer en su fe y caminar acompañada.</p>
+                                <p>Creemos que el evangelio sigue transformando vidas, restaurando familias y devolviendo la esperanza a quienes la han perdido. Por eso, queremos servir con amor allí donde Dios nos ha puesto, compartiendo la vida con las personas, acompañándolas en sus alegrías y dificultades, y caminando juntos hacia una relación más profunda con Jesús.</p>
+                                <p>Confiamos en que, mientras anunciamos fielmente el evangelio y servimos con amor, será el Señor quien añada a Su Iglesia a quienes han de ser salvos.</p>
+                            </div>
+                        </article>
                     </div>
                 </div>
             </div>
@@ -234,7 +264,7 @@
         </section>
 
         <!-- DONACIONES -->
-        <section id="seccion-donaciones" class="section-donaciones">
+        <section id="seccion-donaciones" class="section-donaciones hidden">
             <div class="container">
                 <div class="donaciones-grid">
                     <div class="donaciones-texto">
@@ -295,7 +325,7 @@
                             <a href="#" class="rrss-btn yt">▶️ YouTube</a>
                         </div>
                     </div>
-                    <form class="contacto-form" onsubmit="enviarContacto(event)">
+                    <form id="form-contacto-publico" class="contacto-form hidden" onsubmit="enviarContacto(event)">
                         <div class="cf-group"><label>Tu nombre</label><input type="text" placeholder="¿Cómo te llamas?" required></div>
                         <div class="cf-group"><label>Correo electrónico</label><input type="email" placeholder="tu@correo.com" required></div>
                         <div class="cf-group"><label>¿En qué te podemos ayudar?</label>
@@ -320,12 +350,70 @@
                     <div class="footer-col"><h4>Servicios</h4><ul><li>Miércoles 19:30 — Reunión</li><li>Domingo 10:30 — Coffee</li><li>Domingo 11:00 — Servicio General</li><li>🔴 Live todos los domingos</li></ul></div>
                     <div class="footer-col"><h4>Grupos</h4><ul><li>Matrimonios — Jue 21:00</li><li>Jóvenes — Sáb</li><li>Mujeres — Sáb</li><li>Escuela Bíblica — Mar 21:00</li></ul></div>
                     <div class="footer-col"><h4>Contacto</h4><ul><li>Santa Julia 833, La Florida</li><li>contacto@casadevida.cl</li></ul>
-                        <button class="footer-plataforma-btn" onclick="document.getElementById('btn-ir-login').click()">Acceso Plataforma →</button>
+                        <button id="footer-acceso-plataforma" class="footer-plataforma-btn" onclick="document.getElementById('btn-ir-login').click()">Acceso Plataforma →</button>
                     </div>
                 </div>
                 <div class="footer-bottom"><p>© 2025 Casa de Vida · Todos los derechos reservados</p></div>
             </div>
         </footer>
+    </div>
+
+    <!-- ===================== LO QUE CREEMOS ===================== -->
+    <div id="vista-creemos" class="vista-creemos hidden">
+        <header class="creemos-hero">
+            <div class="creemos-hero-marca" aria-hidden="true">
+                <img src="isotipo-cdv-blanco.png" alt="">
+            </div>
+            <div class="creemos-hero-inner">
+                <p>Casa de Vida · Nuestra fe</p>
+                <h1>Lo que<br><em>creemos.</em></h1>
+                <p class="creemos-intro">Nuestra fe está fundamentada en Dios y en la revelación que Él nos ha dado por medio de Su Palabra. Estas convicciones orientan nuestra enseñanza, nuestra vida como iglesia y nuestra misión de anunciar el evangelio de Jesucristo.</p>
+            </div>
+        </header>
+        <main class="creemos-contenido">
+            <div class="creemos-indice">
+                <span>Nuestra declaración de fe</span>
+            </div>
+            <div class="creemos-lista">
+                <article class="creemos-articulo">
+                    <span>01</span>
+                    <div><h2>Creemos en Dios</h2><p>Creemos en un solo Dios, eterno, santo y soberano, quien se ha revelado como Padre, Hijo y Espíritu Santo. Él es el Creador de todas las cosas, digno de toda adoración, obediencia y gloria.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>02</span>
+                    <div><h2>Creemos en Jesucristo</h2><p>Creemos que Jesucristo es el Hijo eterno de Dios, verdadero Dios y verdadero hombre. Vivió sin pecado, murió en la cruz por nuestros pecados, resucitó corporalmente al tercer día, ascendió al Padre y volverá para establecer plenamente Su Reino.</p><p>Reconocemos que solo en Él hay salvación, reconciliación con Dios y vida eterna.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>03</span>
+                    <div><h2>Creemos en la Palabra de Dios</h2><p>Creemos que las Sagradas Escrituras fueron inspiradas por Dios y constituyen la revelación fiel de Su voluntad para la humanidad.</p><p>Por medio de ellas conocemos a Dios, comprendemos el evangelio y somos guiados para vivir conforme a Su voluntad. Toda enseñanza, práctica y experiencia debe ser examinada a la luz de la Palabra de Dios.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>04</span>
+                    <div><h2>Creemos en el Espíritu Santo</h2><p>Creemos que el Espíritu Santo habita en todo creyente, produce una vida nueva, transforma nuestro carácter y nos conforma cada día más a la imagen de Cristo.</p><p>Creemos que continúa obrando en Su Iglesia y concede dones espirituales para la edificación del cuerpo de Cristo, el servicio a los demás y la proclamación del evangelio, siempre en armonía con la Palabra de Dios y para la gloria de Jesucristo.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>05</span>
+                    <div><h2>Creemos en la salvación</h2><p>Creemos que la salvación es un regalo de la gracia de Dios, recibido por medio de la fe en Jesucristo.</p><p>Creemos que Cristo murió por nuestros pecados y que toda persona es llamada a responder al evangelio con arrepentimiento y fe, encontrando en Él perdón, reconciliación y vida eterna.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>06</span>
+                    <div><h2>Creemos en la Iglesia</h2><p>Creemos que la Iglesia es el cuerpo de Cristo, formado por todos aquellos que han puesto su fe en Él.</p><p>Fuimos llamados a vivir en comunión, crecer juntos, servir con amor y anunciar el evangelio, edificándonos mutuamente mediante los dones que Dios ha concedido a cada creyente.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>07</span>
+                    <div><h2>Creemos en el discipulado</h2><p>Creemos que todo creyente ha sido llamado a seguir a Jesucristo, crecer en santidad y reflejar Su carácter en cada área de su vida.</p><p>El discipulado consiste en caminar diariamente con Cristo, obedecer Su Palabra y permitir que el Espíritu Santo continúe transformándonos.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>08</span>
+                    <div><h2>Creemos en la misión</h2><p>Creemos que la Iglesia ha sido enviada a hacer discípulos de todas las naciones, anunciando el evangelio, enseñando la Palabra de Dios y sirviendo con amor a nuestro prójimo.</p><p>Nuestro deseo es que cada persona conozca a Jesucristo y experimente la esperanza que solo Él puede dar.</p></div>
+                </article>
+                <article class="creemos-articulo">
+                    <span>09</span>
+                    <div><h2>Creemos en la esperanza futura</h2><p>Creemos en el regreso visible y glorioso de Jesucristo, en la resurrección de los muertos, en el juicio final y en la vida eterna junto a Dios para todos aquellos que pertenecen a Cristo.</p><p>Vivimos con la esperanza de Su regreso, procurando ser hallados fieles hasta aquel día.</p></div>
+                </article>
+            </div>
+            <button id="btn-volver-desde-creemos" class="btn-volver-creemos" type="button">← Volver al inicio</button>
+        </main>
     </div>
 
     <!-- ===================== LOGIN ===================== -->
@@ -410,6 +498,64 @@
                     <div class="page-header agenda-page-header">
                         <div><h1>Panel General</h1><p>Agenda y próximas actividades de Casa de Vida</p></div>
                         <button class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nuevo evento</button>
+                    </div>
+
+                    <div class="panel-resumen" aria-label="Resumen general">
+                        <article class="panel-resumen-card">
+                            <div class="panel-resumen-icono miembros" aria-hidden="true">●</div>
+                            <div>
+                                <span>Miembros activos</span>
+                                <strong id="panel-miembros-activos">—</strong>
+                                <p>Personas activas en el directorio</p>
+                            </div>
+                        </article>
+                        <article class="panel-resumen-card">
+                            <div class="panel-resumen-icono actividades" aria-hidden="true">◆</div>
+                            <div>
+                                <span>Actividades futuras</span>
+                                <strong id="panel-actividades-futuras">—</strong>
+                                <p>Próximos eventos no suspendidos</p>
+                            </div>
+                        </article>
+                        <article class="panel-resumen-card">
+                            <div class="panel-resumen-icono por-vencer" aria-hidden="true">!</div>
+                            <div>
+                                <span>Por vencer</span>
+                                <strong id="panel-cuentas-por-vencer">—</strong>
+                                <p>Durante los próximos 7 días</p>
+                            </div>
+                        </article>
+                        <article class="panel-resumen-card">
+                            <div class="panel-resumen-icono vencidas" aria-hidden="true">!</div>
+                            <div>
+                                <span>Cuentas vencidas</span>
+                                <strong id="panel-cuentas-vencidas">—</strong>
+                                <p>Pendientes fuera de plazo</p>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div class="table-card cuentas-panel">
+                        <div class="cuentas-panel-header">
+                            <div><h3>Cuentas por pagar</h3><span id="cuentas-pagar-contador">Sin cuentas pendientes</span></div>
+                            <button class="btn-table" type="button" onclick="toggleFormCuentaPagar()">+ Nueva cuenta</button>
+                        </div>
+                        <form id="form-cuenta-pagar" class="cuenta-pagar-form hidden" onsubmit="guardarCuentaPagar(event)">
+                            <div class="form-grid cuenta-pagar-grid">
+                                <div class="form-group"><label>Cuenta o servicio *</label><input id="cuenta-pagar-nombre" type="text" maxlength="150" placeholder="Electricidad, Internet..." required></div>
+                                <div class="form-group"><label>Proveedor</label><input id="cuenta-pagar-proveedor" type="text" maxlength="150"></div>
+                                <div class="form-group"><label>Categoría *</label><select id="cuenta-pagar-categoria" required><option>Infraestructura</option><option>Pastoral</option><option>Operacional</option><option>Ministerial</option><option>Tecnología</option><option>Otro</option></select></div>
+                                <div class="form-group"><label>Monto estimado</label><input id="cuenta-pagar-monto" type="number" min="1" step="1" placeholder="Opcional"></div>
+                                <div class="form-group"><label>Vencimiento *</label><input id="cuenta-pagar-vencimiento" type="date" required></div>
+                                <div class="form-group"><label>Frecuencia *</label><select id="cuenta-pagar-frecuencia" required><option value="unica">Única</option><option value="mensual">Mensual</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option></select></div>
+                                <div class="form-group cuenta-pagar-observaciones"><label>Observaciones</label><input id="cuenta-pagar-observaciones" type="text" maxlength="300"></div>
+                            </div>
+                            <div class="form-actions">
+                                <button id="btn-guardar-cuenta-pagar" type="submit" class="btn-action">Guardar cuenta</button>
+                                <button type="button" class="btn-cancel" onclick="toggleFormCuentaPagar(false)">Cancelar</button>
+                            </div>
+                        </form>
+                        <div id="cuentas-pagar-lista" class="cuentas-pagar-lista"><p class="agenda-vacia">Cargando cuentas...</p></div>
                     </div>
 
                     <div id="form-evento" class="form-card agenda-form hidden">
@@ -894,6 +1040,24 @@
         <div class="modal-agenda-actions">
             <button type="button" class="btn-cancel" onclick="cerrarModalSuspensionEvento()">Cancelar</button>
             <button id="btn-confirmar-suspension" type="button" class="btn-suspender-evento" onclick="confirmarSuspensionEvento()">Suspender evento</button>
+        </div>
+    </div>
+</div>
+<!-- Modal confirmación de cuenta pagada -->
+<div id="modal-confirmar-pago" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="modal-pago-titulo">
+    <div class="modal-agenda-panel">
+        <div class="modal-agenda-header">
+            <div><h3 id="modal-pago-titulo">Confirmar pago</h3><p id="modal-pago-nombre">Cuenta seleccionada</p></div>
+            <button type="button" onclick="cerrarModalConfirmarPago()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="form-group">
+            <label for="modal-pago-monto">Monto final pagado (CLP $) *</label>
+            <input id="modal-pago-monto" type="number" min="1" step="1" inputmode="numeric">
+        </div>
+        <p id="modal-pago-ayuda" style="margin-top:10px;font-size:12px;line-height:1.55;color:var(--muted);">Al confirmar se registrará inmediatamente el egreso financiero.</p>
+        <div class="modal-agenda-actions">
+            <button type="button" class="btn-cancel" onclick="cerrarModalConfirmarPago()">Cancelar</button>
+            <button id="btn-confirmar-pago" type="button" class="btn-action" onclick="confirmarPagoCuenta()">Confirmar pago</button>
         </div>
     </div>
 </div>

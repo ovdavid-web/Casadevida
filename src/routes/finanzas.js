@@ -67,13 +67,29 @@ router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial')
             return res.status(400).json({ error: 'El monto debe ser un número mayor a 0' });
         }
 
+        let nombreServicioFinal = nombre_servicio || null;
+        const [anio, mes, diaMes] = String(fecha).split('-').map(Number);
+        const fechaValida = Boolean(anio && mes && diaMes);
+        const diaSemana = fechaValida
+            ? new Date(Date.UTC(anio, mes - 1, diaMes)).getUTCDay()
+            : null;
+        const esPrimerDomingo = diaSemana === 0 && diaMes <= 7;
+
+        if (tipo === 'Diezmo de Miembro' && esPrimerDomingo) {
+            const nombreMes = new Intl.DateTimeFormat('es-CL', {
+                month: 'long',
+                timeZone: 'UTC'
+            }).format(new Date(Date.UTC(anio, mes - 1, 1)));
+            nombreServicioFinal = `Diezmo de Santa Cena · ${nombreMes.charAt(0).toUpperCase()}${nombreMes.slice(1)} ${anio}`;
+        }
+
         const { data, error } = await supabase
             .from('finanzas')
             .insert({
                 tipo,
                 monto:           Number(monto),
                 fecha,
-                nombre_servicio: nombre_servicio || null,
+                nombre_servicio: nombreServicioFinal,
                 servicio_id:     servicio_id     || null,
                 miembro_id:      miembro_id      || null,
                 familia_id:      familia_id      || null,

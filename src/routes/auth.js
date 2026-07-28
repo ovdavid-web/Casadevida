@@ -13,6 +13,12 @@ const ROLES_VALIDOS = ['superadmin', 'pastor', 'tesorero', 'oficial', 'lider', '
 // ============================================================
 router.post('/login', async (req, res) => {
     try {
+        if (process.env.ADMIN_ENABLED === 'false') {
+            return res.status(503).json({
+                error: 'El acceso a la plataforma aún no está habilitado.'
+            });
+        }
+
         const { correo, password } = req.body;
 
         // Validar que vengan los datos

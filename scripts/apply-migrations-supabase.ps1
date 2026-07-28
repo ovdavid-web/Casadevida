@@ -13,7 +13,8 @@ $migrations = @(
     'database\006_base_personas_roles.sql',
     'database\007_catalogo_permisos.sql',
     'database\008_audiencias_eventos.sql',
-    'database\009_departamentos_y_actividades.sql'
+    'database\009_departamentos_y_actividades.sql',
+    'database\010_vincular_miembros_personas.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -99,6 +100,20 @@ join public.roles r on r.id = rp.rol_id
 join public.permisos p on p.id = rp.permiso_id
 where r.codigo = 'tesorero'
   and p.codigo like 'aportes_historial.%';
+
+select 'miembros=' || count(*) from public.miembros;
+select 'personas=' || count(*) from public.personas;
+select 'miembros_sin_persona=' || count(*)
+from public.miembros
+where persona_id is null;
+select 'vinculos_miembro=' || count(*)
+from public.vinculos_iglesia
+where tipo = 'miembro';
+select 'finanzas_huerfanas=' || count(*)
+from public.finanzas f
+left join public.miembros m on m.id = f.miembro_id
+where f.miembro_id is not null
+  and m.id is null;
 '@
 
     Write-Host ''

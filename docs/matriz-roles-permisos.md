@@ -21,7 +21,7 @@ Estado: propuesta para revisión. Este documento todavía no autoriza cambios en
 | `pastor` | Gestión pastoral y administrativa amplia, sin editar contenido público ni elevar privilegios críticos |
 | `tesorero` | Gestión completa de finanzas y cuentas por pagar |
 | `oficial` | Funciones logísticas expresamente autorizadas |
-| `lider` | Coordinación de actividades e integrantes de los equipos que dirige |
+| `lider` | Coordinación de actividades de los departamentos o grupos que dirige |
 | `editor_contenido` | Gestión y publicación del contenido público y eventos |
 | `voluntario` | Acceso a convocatorias, reuniones y asignaciones del equipo de servicio |
 | `miembro` | Acceso personal y, en el futuro, a inscripciones educativas |
@@ -74,20 +74,20 @@ El rol `voluntario` es acumulable. Un usuario puede tener simultáneamente
 `miembro` y `voluntario`, sin crear otra cuenta.
 
 El rol `lider` también es acumulable y siempre debe asociarse a uno o más
-equipos concretos. El rol entrega la capacidad de coordinación; la relación
-con el equipo limita dónde puede ejercerla.
+departamentos o grupos concretos. El rol entrega la capacidad de coordinación;
+la relación con el departamento limita dónde puede ejercerla.
 
 Un líder puede:
 
-- Ver las actividades autorizadas para sus roles y equipos.
-- Ver datos operativos limitados de los integrantes de su equipo.
-- Crear actividades internas para los equipos que dirige.
+- Ver las actividades autorizadas para sus roles y departamentos.
+- Ver datos operativos limitados necesarios para coordinar.
+- Crear actividades internas para los departamentos que dirige.
 - Editar o suspender esas actividades dejando auditoría.
 - Incluir esas actividades en los avisos semanales internos.
 
 Un líder no puede:
 
-- Crear actividades para equipos que no dirige.
+- Crear actividades para departamentos que no dirige.
 - Publicar actividades en el Home.
 - Acceder a finanzas, usuarios, roles o al directorio completo.
 - Ver información personal no necesaria para coordinar su equipo.
@@ -98,10 +98,11 @@ Reglas de seguridad:
 - La audiencia `publica` permite verlo sin iniciar sesión.
 - La audiencia `miembros` exige una cuenta activa con rol `miembro`.
 - La audiencia `rol` puede repetirse para varios roles autorizados.
+- La audiencia `departamento` limita la actividad al departamento o grupo asociado.
 - Si un evento no tiene audiencia válida, no se muestra.
 - Las audiencias se filtran en el backend antes de enviar datos al navegador.
 - Los eventos internos antiguos quedan inicialmente limitados a superadmin y pastor.
-- Las audiencias por equipo se agregarán junto con el futuro módulo de Servicios y Voluntarios.
+- Los equipos operativos más detallados se agregarán con el futuro módulo de Servicios y Voluntarios.
 
 ## Actualización del perfil personal
 

@@ -60,6 +60,10 @@ values
     ('eventos_internos.ver', 'eventos', 'ver', 'Ver eventos internos autorizados'),
     ('eventos_internos.gestionar', 'eventos', 'gestionar', 'Crear y modificar eventos internos'),
     ('eventos_autorizados.ver', 'eventos', 'ver', 'Ver actividades según rol, equipo o audiencia'),
+    ('eventos_equipo.crear', 'eventos', 'crear', 'Crear actividades internas para un equipo dirigido'),
+    ('eventos_equipo.editar', 'eventos', 'editar', 'Editar actividades del equipo dirigido'),
+    ('eventos_equipo.suspender', 'eventos', 'suspender', 'Suspender actividades del equipo dirigido dejando motivo'),
+    ('equipos_integrantes.limitado.ver', 'equipos', 'ver', 'Ver datos operativos limitados del equipo dirigido'),
 
     ('auditoria.completa.ver', 'auditoria', 'ver', 'Ver la auditoría completa'),
     ('auditoria.limitada.ver', 'auditoria', 'ver', 'Ver auditoría del ámbito autorizado')
@@ -185,6 +189,23 @@ with asignaciones(rol_codigo, permiso_codigo) as (
         ('miembro', 'eventos_autorizados.ver'),
         ('voluntario', 'panel.personal.ver'),
         ('voluntario', 'eventos_autorizados.ver')
+)
+insert into public.rol_permisos (rol_id, permiso_id)
+select r.id, p.id
+from asignaciones a
+join public.roles r on r.codigo = a.rol_codigo
+join public.permisos p on p.codigo = a.permiso_codigo
+on conflict do nothing;
+
+-- Líder: coordinación limitada exclusivamente a los equipos que dirige.
+with asignaciones(rol_codigo, permiso_codigo) as (
+    values
+        ('lider', 'panel.personal.ver'),
+        ('lider', 'eventos_autorizados.ver'),
+        ('lider', 'eventos_equipo.crear'),
+        ('lider', 'eventos_equipo.editar'),
+        ('lider', 'eventos_equipo.suspender'),
+        ('lider', 'equipos_integrantes.limitado.ver')
 )
 insert into public.rol_permisos (rol_id, permiso_id)
 select r.id, p.id

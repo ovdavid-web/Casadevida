@@ -16,7 +16,6 @@ create table if not exists public.personas (
     documento_normalizado text,
     nombres text not null,
     apellidos text,
-    nombre_preferido text,
     correo text,
     correo_verificado boolean not null default false,
     telefono text,
@@ -137,6 +136,7 @@ values
     ('tesorero', 'Tesorero', 'Gestión completa del módulo financiero', true),
     ('oficial', 'Oficial', 'Funciones logísticas autorizadas', false),
     ('editor_contenido', 'Editor de contenido', 'Gestión y publicación del contenido público', true),
+    ('voluntario', 'Voluntario', 'Acceso a convocatorias y actividades del equipo de servicio', false),
     ('miembro', 'Miembro', 'Acceso personal y futuras inscripciones educativas', false)
 on conflict (codigo) do update
 set

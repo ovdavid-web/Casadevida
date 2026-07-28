@@ -72,6 +72,17 @@ Ejemplos:
 El rol `voluntario` es acumulable. Un usuario puede tener simultáneamente
 `miembro` y `voluntario`, sin crear otra cuenta.
 
+Reglas de seguridad:
+
+- Un evento puede tener más de una audiencia.
+- La audiencia `publica` permite verlo sin iniciar sesión.
+- La audiencia `miembros` exige una cuenta activa con rol `miembro`.
+- La audiencia `rol` puede repetirse para varios roles autorizados.
+- Si un evento no tiene audiencia válida, no se muestra.
+- Las audiencias se filtran en el backend antes de enviar datos al navegador.
+- Los eventos internos antiguos quedan inicialmente limitados a superadmin y pastor.
+- Las audiencias por equipo se agregarán junto con el futuro módulo de Servicios y Voluntarios.
+
 ## Actualización del perfil personal
 
 Un miembro con cuenta puede:

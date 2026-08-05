@@ -8,13 +8,13 @@ const router = express.Router();
 // GET /api/familias
 // Lista todas las familias activas
 // ============================================================
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('familias')
             .select(`
                 *,
-                miembros (id, nombre, area_servicio)
+                miembros (id, nombre)
             `)
             .eq('activo', true)
             .order('nombre', { ascending: true });
@@ -33,7 +33,7 @@ router.get('/', verificarToken, async (req, res) => {
 // POST /api/familias
 // Crea una nueva familia
 // ============================================================
-router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.post('/', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { nombre } = req.body;
 
@@ -69,7 +69,7 @@ router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial')
 // PUT /api/familias/:id/miembro
 // Asocia o quita un miembro de una familia
 // ============================================================
-router.put('/:id/miembro', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.put('/:id/miembro', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { id }               = req.params;
         const { miembro_id, quitar } = req.body;
@@ -102,7 +102,7 @@ router.put('/:id/miembro', verificarToken, verificarRol('superadmin', 'pastor', 
 // DELETE /api/familias/:id
 // Desactiva una familia
 // ============================================================
-router.delete('/:id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.delete('/:id', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { id } = req.params;
 

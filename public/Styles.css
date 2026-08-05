@@ -600,8 +600,8 @@ body.modal-abierto { overflow: hidden; }
 }
 .form-actions { display: flex; gap: 10px; }
 .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-.tabla-scroll { width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
-.tabla-scroll > table { min-width: 680px; }
+.tabla-scroll { width: 100%; overflow: visible; }
+.tabla-scroll > table { width: 100%; min-width: 0; table-layout: fixed; }
 .table-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-soft); }
 .search-input { padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; width: 220px; outline: none; background: var(--paper); }
 .search-input:focus { border-color: var(--blue-acc); }
@@ -810,6 +810,22 @@ body.modal-abierto { overflow: hidden; }
     #vista-finanzas .filtros-finanzas { display: grid !important; grid-template-columns: 90px 140px minmax(170px, 1fr) 80px auto; width: 100%; }
     #vista-finanzas .filtros-finanzas select { width: 100%; min-width: 0; }
     #vista-finanzas #filtro-contador { align-self: center; white-space: nowrap; }
+    #vista-finanzas .ingresos-table th,
+    #vista-finanzas .ingresos-table td,
+    #vista-egresos .egresos-table th,
+    #vista-egresos .egresos-table td { padding-right: 12px; padding-left: 12px; overflow-wrap: anywhere; }
+    #vista-finanzas .ingresos-table th:nth-child(1) { width: 36%; }
+    #vista-finanzas .ingresos-table th:nth-child(2) { width: 24%; }
+    #vista-finanzas .ingresos-table th:nth-child(3) { width: 25%; }
+    #vista-finanzas .ingresos-table th:nth-child(5) { width: 15%; }
+    #vista-finanzas .ingresos-table th:nth-child(4),
+    #vista-finanzas .ingresos-table td:nth-child(4) { display: none; }
+    #vista-egresos .egresos-table th:nth-child(1) { width: 34%; }
+    #vista-egresos .egresos-table th:nth-child(2) { width: 25%; }
+    #vista-egresos .egresos-table th:nth-child(3) { width: 24%; }
+    #vista-egresos .egresos-table th:nth-child(5) { width: 17%; }
+    #vista-egresos .egresos-table th:nth-child(4),
+    #vista-egresos .egresos-table td:nth-child(4) { display: none; }
     #vista-finanzas-reporte .dashboard-graficos { grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr) !important; }
     #vista-finanzas-reporte .dash-widget { min-width: 0; overflow: hidden; }
     #vista-finanzas-reporte canvas { max-width: 100% !important; }
@@ -860,7 +876,6 @@ body.modal-abierto { overflow: hidden; }
 .movimiento-mobile-meta { display: none; }
 
 @media (max-width: 640px) {
-    .tabla-scroll > table { min-width: 0; }
     .editor-persona-modal { align-items: end; padding: 0; }
     .editor-persona-panel { width: 100%; max-height: 94dvh; border-radius: 18px 18px 0 0; }
     .editor-persona-header { padding: 18px 16px 15px; }

@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 const supabase = require('../supabase');
 
+const PRIORIDAD_ROLES = [
+    'superadmin', 'pastor', 'tesorero', 'oficial',
+    'editor_contenido', 'lider', 'voluntario', 'miembro'
+];
+
 async function obtenerRolesVigentes(usuario) {
     const roles = new Set([usuario.rol].filter(Boolean));
     if (!usuario.persona_id || usuario.rol === 'superadmin') return [...roles];
@@ -48,19 +53,26 @@ const verificarToken = async (req, res, next) => {
             .eq('id', decoded.id)
             .single();
         if (error || !usuario || !usuario.activo) {
-            return res.status(403).json({ error: 'La cuenta no está activa. Inicia sesión nuevamente.' });
+            return res.status(401).json({
+                codigo: 'SESSION_REVOKED',
+                error: 'Tu cuenta está desactivada. Contacta al administrador.'
+            });
         }
 
         const roles = await obtenerRolesVigentes(usuario);
+        const rolPrincipal = PRIORIDAD_ROLES.find(rol => roles.includes(rol)) || 'miembro';
         req.usuario = {
             id: usuario.id,
             correo: usuario.correo,
-            rol: roles.includes('superadmin') ? 'superadmin' : (usuario.rol || 'miembro'),
+            rol: rolPrincipal,
             roles
         };
         next();
     } catch (err) {
-        return res.status(403).json({ error: 'Token inválido o expirado. Inicia sesión nuevamente.' });
+        return res.status(401).json({
+            codigo: 'SESSION_INVALID',
+            error: 'Token inválido o expirado. Inicia sesión nuevamente.'
+        });
     }
 };
 

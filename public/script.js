@@ -30,6 +30,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 : 'El servidor entregó una respuesta no válida.');
         }
         const data = await res.json();
+        if (res.status === 401) {
+            sessionStorage.clear();
+            hide(vistaDashboard);
+            hide(vistaHome);
+            hide(vistaCreemos);
+            show(navPublica);
+            show(vistaLogin);
+            show(btnVolverHome);
+            hide(btnIrLogin);
+            toast(data.error || 'Tu cuenta está desactivada. Contacta al administrador.', 'error');
+            throw new Error(data.error || 'Acceso denegado');
+        }
         if (!res.ok) throw new Error(data.error || 'Error del servidor');
         return data;
     }
@@ -285,6 +297,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (esPerfilTesorero && selector && !selector.value) selector.value = mesActual;
         });
     };
+
+    const sincronizarSesionViva = async () => {
+        if (!getToken()) return;
+        try {
+            const { usuario } = await apiFetch('/api/auth/sesion');
+            if (!usuario) return;
+            const usuarioSincronizado = { ...getUsuario(), ...usuario };
+            sessionStorage.setItem('cdv_usuario', JSON.stringify(usuarioSincronizado));
+            rolUsuario.textContent = usuarioSincronizado.rol;
+            configurarInterfazPorRol(usuarioSincronizado);
+        } catch (err) {
+            // apiFetch limpia y revoca automáticamente las sesiones inválidas.
+        }
+    };
+
+    window.setInterval(sincronizarSesionViva, 15000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') sincronizarSesionViva();
+    });
 
     const abrirSesionEnInterfaz = data => {
         sessionStorage.setItem('cdv_token', data.token);

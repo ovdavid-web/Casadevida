@@ -2,6 +2,7 @@ const express   = require('express');
 const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const supabase  = require('../supabase');
+const { verificarToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -15,6 +16,10 @@ const PRIORIDAD_ROLES = [
     'voluntario',
     'miembro'
 ];
+
+router.get('/sesion', verificarToken, (req, res) => {
+    res.json({ usuario: req.usuario });
+});
 
 async function enriquecerRolesUsuario(usuario) {
     if (usuario.rol === 'superadmin' || !usuario.persona_id) {

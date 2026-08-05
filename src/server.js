@@ -4,26 +4,78 @@ const dotenv  = require('dotenv');
 const path    = require('path');
 
 // Cargar variables de entorno
-dotenv.config();
+// En desarrollo local, el archivo del proyecto debe prevalecer sobre
+// variables antiguas heredadas por la sesión de Windows.
+dotenv.config({ override: true });
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_ENABLED = process.env.ADMIN_ENABLED !== 'false';
+const ADMIN_ENABLED = process.env.ADMIN_ENABLED === 'true';
 const DONATIONS_ENABLED = process.env.DONATIONS_ENABLED === 'true';
 const CONTACT_FORM_ENABLED = process.env.CONTACT_FORM_ENABLED === 'true';
+const ALLOWED_ORIGINS = new Set(
+    String(process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(Boolean)
+);
+
+const intentosLogin = new Map();
+const VENTANA_LOGIN_MS = 15 * 60 * 1000;
+const MAX_INTENTOS_LOGIN = 8;
+
+if (ADMIN_ENABLED && String(process.env.JWT_SECRET || '').length < 32) {
+    throw new Error('JWT_SECRET debe tener al menos 32 caracteres antes de habilitar el panel administrativo.');
+}
 
 // ============================================================
 // MIDDLEWARES
 // ============================================================
-app.use(cors());
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+});
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || ALLOWED_ORIGINS.has(origin)) return callback(null, true);
+        return callback(null, false);
+    }
+}));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+
+app.use('/api/auth/login', (req, res, next) => {
+    const ahora = Date.now();
+    const clave = req.ip || req.socket.remoteAddress || 'desconocida';
+    const estado = intentosLogin.get(clave);
+    if (estado && ahora - estado.inicio < VENTANA_LOGIN_MS && estado.intentos >= MAX_INTENTOS_LOGIN) {
+        return res.status(429).json({ error: 'Demasiados intentos. Espera 15 minutos antes de volver a intentar.' });
+    }
+
+    const registro = !estado || ahora - estado.inicio >= VENTANA_LOGIN_MS
+        ? { inicio: ahora, intentos: 0 }
+        : estado;
+    intentosLogin.set(clave, registro);
+    res.on('finish', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+            intentosLogin.delete(clave);
+        } else if (res.statusCode === 401 || res.statusCode === 403) {
+            registro.intentos += 1;
+        }
+    });
+    next();
+});
 
 // ============================================================
 // RUTAS API
 // ============================================================
 app.use('/api/auth',     require('./routes/auth'));
 app.use('/api/miembros', require('./routes/miembros'));
+app.use('/api/personas', require('./routes/personas'));
+app.use('/api/usuarios', require('./routes/usuarios'));
 app.use('/api/finanzas', require('./routes/finanzas'));
 app.use('/api/servicios', require('./routes/servicios'));
 app.use('/api/familias', require('./routes/familias'));

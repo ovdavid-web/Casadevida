@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/egresos
 // Lista todos los egresos
 // ============================================================
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, verificarRol('superadmin', 'pastor', 'tesorero'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('egresos')
@@ -39,7 +39,7 @@ router.get('/', verificarToken, async (req, res) => {
 // POST /api/egresos
 // Registra un nuevo egreso
 // ============================================================
-router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.post('/', verificarToken, verificarRol('superadmin', 'tesorero'), async (req, res) => {
     try {
         const {
             item,
@@ -67,7 +67,7 @@ router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial')
                 monto:          Number(monto),
                 fecha,
                 observaciones:  observaciones || null,
-                registrado_por: registrado_por || null
+                registrado_por: req.usuario.id
             })
             .select()
             .single();
@@ -94,7 +94,7 @@ router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial')
 // PUT /api/egresos/:id
 // Actualiza un egreso
 // ============================================================
-router.put('/:id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.put('/:id', verificarToken, verificarRol('superadmin', 'tesorero'), async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -104,9 +104,29 @@ router.put('/:id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial
             .eq('id', id)
             .single();
 
+        const camposPermitidos = ['item', 'categoria', 'proveedor', 'monto', 'fecha', 'observaciones'];
+        const cambios = Object.fromEntries(
+            camposPermitidos
+                .filter(campo => Object.prototype.hasOwnProperty.call(req.body, campo))
+                .map(campo => [campo, req.body[campo]])
+        );
+        if (!Object.keys(cambios).length) {
+            return res.status(400).json({ error: 'No hay campos válidos para actualizar' });
+        }
+        if (Object.prototype.hasOwnProperty.call(cambios, 'monto')) {
+            const montoNumerico = Number(cambios.monto);
+            if (!Number.isFinite(montoNumerico) || montoNumerico <= 0) {
+                return res.status(400).json({ error: 'El monto debe ser un número mayor a 0' });
+            }
+            cambios.monto = montoNumerico;
+        }
+        if (cambios.fecha && !/^\d{4}-\d{2}-\d{2}$/.test(cambios.fecha)) {
+            return res.status(400).json({ error: 'La fecha no es válida' });
+        }
+
         const { data, error } = await supabase
             .from('egresos')
-            .update(req.body)
+            .update(cambios)
             .eq('id', id)
             .select()
             .single();
@@ -134,30 +154,17 @@ router.put('/:id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial
 // DELETE /api/egresos/:id
 // Elimina un egreso
 // ============================================================
-router.delete('/:id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const { error } = await supabase
-            .from('egresos')
-            .delete()
-            .eq('id', id);
-
-        if (error) throw error;
-
-        res.json({ mensaje: 'Egreso eliminado correctamente' });
-
-    } catch (err) {
-        console.error('Error eliminando egreso:', err);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+router.delete('/:id', verificarToken, verificarRol('superadmin', 'tesorero'), async (req, res) => {
+    res.status(405).json({
+        error: 'Los egresos no se eliminan físicamente. Debe implementarse una anulación auditada.'
+    });
 });
 
 // ============================================================
 // GET /api/egresos/reporte/:anio
 // Reporte anual de egresos
 // ============================================================
-router.get('/reporte/:anio', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.get('/reporte/:anio', verificarToken, verificarRol('superadmin', 'pastor', 'tesorero'), async (req, res) => {
     try {
         const { anio } = req.params;
 

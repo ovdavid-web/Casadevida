@@ -63,7 +63,7 @@ function prepararEvento(body) {
     return { evento };
 }
 
-router.get('/', verificarToken, verificarRol('pastor'), async (req, res) => {
+router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('eventos').select('*').order('fecha_inicio', { ascending: true });

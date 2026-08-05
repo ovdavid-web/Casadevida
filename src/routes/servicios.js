@@ -8,7 +8,7 @@ const router = express.Router();
 // GET /api/servicios
 // Obtiene todos los servicios programados
 // ============================================================
-router.get('/', verificarToken, async (req, res) => {
+router.get('/', verificarToken, verificarRol('pastor', 'oficial', 'lider'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('servicios')
@@ -29,7 +29,7 @@ router.get('/', verificarToken, async (req, res) => {
 // POST /api/servicios
 // Crea un nuevo servicio
 // ============================================================
-router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.post('/', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const {
             nombre,
@@ -84,7 +84,7 @@ router.post('/', verificarToken, verificarRol('superadmin', 'pastor', 'oficial')
 // GET /api/servicios/:id/voluntarios
 // Obtiene los voluntarios asignados a un servicio
 // ============================================================
-router.get('/:id/voluntarios', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.get('/:id/voluntarios', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -95,8 +95,7 @@ router.get('/:id/voluntarios', verificarToken, verificarRol('superadmin', 'pasto
                 miembro:miembro_id (
                     id,
                     nombre,
-                    telefono,
-                    area_servicio
+                    telefono
                 )
             `)
             .eq('servicio_id', id);
@@ -129,7 +128,7 @@ router.get('/:id/voluntarios', verificarToken, verificarRol('superadmin', 'pasto
 // POST /api/servicios/:id/asignar
 // Asigna un voluntario a un servicio
 // ============================================================
-router.post('/:id/asignar', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.post('/:id/asignar', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { id }         = req.params;
         const { miembro_id, rol } = req.body;
@@ -169,7 +168,7 @@ router.post('/:id/asignar', verificarToken, verificarRol('superadmin', 'pastor',
 // El voluntario responde su disponibilidad (1, 2 o 3)
 // Este endpoint lo usará el bot de WhatsApp
 // ============================================================
-router.put('/respuesta/:asignacion_id', verificarToken, verificarRol('superadmin', 'pastor', 'oficial'), async (req, res) => {
+router.put('/respuesta/:asignacion_id', verificarToken, verificarRol('superadmin', 'pastor'), async (req, res) => {
     try {
         const { asignacion_id } = req.params;
         const { respuesta }     = req.body; // 1, 2 o 3

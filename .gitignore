@@ -5,3 +5,4 @@ node_modules/
 .server-error.log
 .tools/
 backups/
+logs/

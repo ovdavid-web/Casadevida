@@ -261,6 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         $('btn-nuevo-evento')?.classList.toggle('hidden', esOficial || esPerfilTesorero);
         $('btn-nueva-cuenta')?.classList.toggle('hidden', esOficial);
+        ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'panel-cuentas-pagar'].forEach(id => {
+            $(id)?.classList.toggle('hidden', esOficial);
+        });
         ['btn-nueva-persona', 'btn-nueva-familia'].forEach(id => {
             $(id)?.classList.toggle('hidden', esOficial || esPerfilTesorero);
         });
@@ -682,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const [resultadoEventos, resultadoMiembros, resultadoCuentas] = await Promise.allSettled([
             apiFetch('/api/eventos'),
             apiFetch('/api/miembros'),
-            apiFetch('/api/cuentas-pagar')
+            esOficialConsulta() ? Promise.resolve({ cuentas: [] }) : apiFetch('/api/cuentas-pagar')
         ]);
 
         if (resultadoEventos.status === 'fulfilled') {

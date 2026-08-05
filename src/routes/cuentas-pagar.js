@@ -14,7 +14,7 @@ const CATEGORIAS = [
 ];
 
 const FRECUENCIAS = ['unica', 'mensual', 'trimestral', 'semestral', 'anual'];
-const accesoLecturaPanel = verificarRol('pastor', 'tesorero', 'oficial');
+const accesoLecturaPanel = verificarRol('pastor', 'tesorero');
 const accesoFinanciero = verificarRol('tesorero');
 
 router.get('/', verificarToken, accesoLecturaPanel, async (req, res) => {
@@ -25,25 +25,7 @@ router.get('/', verificarToken, accesoLecturaPanel, async (req, res) => {
             .order('fecha_vencimiento', { ascending: true });
 
         if (error) throw error;
-        const rolesUsuario = new Set([
-            req.usuario.rol,
-            ...(Array.isArray(req.usuario.roles) ? req.usuario.roles : [])
-        ].filter(Boolean));
-        const soloResumen = rolesUsuario.has('oficial')
-            && !rolesUsuario.has('superadmin')
-            && !rolesUsuario.has('pastor')
-            && !rolesUsuario.has('tesorero');
-        const cuentas = soloResumen
-            ? (data || []).map(cuenta => ({
-                id: cuenta.id,
-                nombre: cuenta.nombre,
-                categoria: cuenta.categoria,
-                monto: cuenta.monto,
-                fecha_vencimiento: cuenta.fecha_vencimiento,
-                estado: cuenta.estado
-            }))
-            : (data || []);
-        res.json({ cuentas });
+        res.json({ cuentas: data || [] });
     } catch (err) {
         console.error('Error obteniendo cuentas por pagar:', err);
         res.status(500).json({ error: 'Error interno del servidor' });

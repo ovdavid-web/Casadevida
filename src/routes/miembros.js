@@ -119,9 +119,9 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             return res.status(400).json({ error: 'Ingresa un RUT chileno válido' });
         }
 
-        // Una membresía inactiva nunca puede conservar una cuenta habilitada.
-        // El bloqueo se hace primero para que cualquier fallo posterior sea seguro.
-        if (activo === false) {
+        // El estado del miembro y su cuenta de acceso deben ser coherentes:
+        // activo habilita la cuenta existente; inactivo la bloquea.
+        if (typeof activo === 'boolean') {
             const { data: miembroActual, error: errorMiembroActual } = await supabase
                 .from('miembros')
                 .select('persona_id')
@@ -132,12 +132,12 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
                 return res.status(404).json({ error: 'Miembro no encontrado' });
             }
 
-            const { error: errorBloqueo } = await supabase
+            const { error: errorCuenta } = await supabase
                 .from('usuarios')
-                .update({ activo: false })
+                .update({ activo })
                 .eq('persona_id', miembroActual.persona_id);
 
-            if (errorBloqueo) throw errorBloqueo;
+            if (errorCuenta) throw errorCuenta;
         }
 
         const { data, error } = await supabase.rpc('actualizar_miembro_con_persona', {

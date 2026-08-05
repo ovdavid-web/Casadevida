@@ -1076,6 +1076,41 @@
         <div id="modal-detalle-contenido"></div>
     </div>
 </div>
+
+<!-- Motivo requerido al desactivar una membresía -->
+<div id="modal-motivo-inactividad" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="motivo-inactividad-titulo">
+    <div class="modal-agenda-panel modal-motivo-panel">
+        <div class="modal-agenda-header">
+            <div>
+                <h3 id="motivo-inactividad-titulo">Desactivar miembro</h3>
+                <p>Selecciona un motivo para conservarlo en el historial.</p>
+            </div>
+            <button type="button" onclick="cerrarMotivoInactividad()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="admin-form">
+            <div class="form-group">
+                <label>Motivo *</label>
+                <select id="miembro-motivo-inactividad">
+                    <option value="">Selecciona un motivo</option>
+                    <option>Retiro voluntario</option>
+                    <option>Dejó de asistir</option>
+                    <option>Fallecimiento</option>
+                    <option>Cambio de iglesia</option>
+                    <option>Cambio de ciudad o país</option>
+                    <option value="Otro">Otro</option>
+                </select>
+            </div>
+            <div id="grupo-motivo-inactividad-otro" class="form-group hidden">
+                <label>Especificar motivo *</label>
+                <input id="miembro-motivo-inactividad-otro" type="text" maxlength="120" placeholder="Describe brevemente el motivo">
+            </div>
+        </div>
+        <div class="modal-agenda-actions">
+            <button type="button" class="btn-cancel" onclick="cerrarMotivoInactividad()">Cancelar</button>
+            <button type="button" class="btn-action" onclick="confirmarMotivoInactividad()">Confirmar desactivación</button>
+        </div>
+    </div>
+</div>
 <!-- La clave temporal se muestra una sola vez al administrador -->
 <div id="modal-credencial-temporal" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="credencial-temporal-titulo">
     <div class="modal-agenda-panel modal-credencial-panel">

@@ -59,7 +59,8 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
             fecha_bautismo,
             direccion,
             fecha_ingreso,
-            activo
+            activo,
+            motivo_inactividad
         } = req.body;
 
         if (!nombre) return res.status(400).json({ error: 'El nombre es requerido' });
@@ -118,27 +119,27 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
         if (!esRutValido(rut)) {
             return res.status(400).json({ error: 'Ingresa un RUT chileno válido' });
         }
-
-        // El estado del miembro y su cuenta de acceso deben ser coherentes:
-        // activo habilita la cuenta existente; inactivo la bloquea.
-        if (typeof activo === 'boolean') {
-            const { data: miembroActual, error: errorMiembroActual } = await supabase
-                .from('miembros')
-                .select('persona_id')
-                .eq('id', id)
-                .single();
-
-            if (errorMiembroActual || !miembroActual?.persona_id) {
-                return res.status(404).json({ error: 'Miembro no encontrado' });
-            }
-
-            const { error: errorCuenta } = await supabase
-                .from('usuarios')
-                .update({ activo })
-                .eq('persona_id', miembroActual.persona_id);
-
-            if (errorCuenta) throw errorCuenta;
+        if (activo === false && !motivo_inactividad?.trim()) {
+            return res.status(400).json({ error: 'Indica el motivo de inactividad' });
         }
+
+        const { data: miembroActual, error: errorMiembroActual } = await supabase
+            .from('miembros')
+            .select('persona_id')
+            .eq('id', id)
+            .single();
+        if (errorMiembroActual || !miembroActual?.persona_id) {
+            return res.status(404).json({ error: 'Miembro no encontrado' });
+        }
+
+        const { data: vinculoActual } = await supabase
+            .from('vinculos_iglesia')
+            .select('id')
+            .eq('persona_id', miembroActual.persona_id)
+            .eq('tipo', 'miembro')
+            .order('fecha_inicio', { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
         const { data, error } = await supabase.rpc('actualizar_miembro_con_persona', {
             p_miembro_id: id,
@@ -164,6 +165,34 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
                 return res.status(404).json({ error: error.message });
             }
             throw error;
+        }
+
+        // Activación, cuenta y membresía se sincronizan siempre. Los roles y
+        // la contraseña se conservan intactos.
+        const { error: errorCuenta } = await supabase
+            .from('usuarios')
+            .update({ activo: activo !== false })
+            .eq('persona_id', miembroActual.persona_id);
+        if (errorCuenta) throw errorCuenta;
+
+        if (activo === false && vinculoActual?.id) {
+            const motivo = motivo_inactividad.trim().slice(0, 160);
+            const { error: errorMotivo } = await supabase
+                .from('vinculos_iglesia')
+                .update({ motivo_fin: motivo })
+                .eq('id', vinculoActual.id);
+            if (errorMotivo) throw errorMotivo;
+
+            const { error: errorAuditoriaMotivo } = await supabase.from('auditoria').insert({
+                usuario_id: req.usuario.id,
+                accion: 'DESACTIVAR_MIEMBRO',
+                tabla: 'vinculos_iglesia',
+                registro_id: vinculoActual.id,
+                datos_despues: { motivo }
+            });
+            if (errorAuditoriaMotivo) {
+                console.error('No fue posible auditar el motivo de inactividad:', errorAuditoriaMotivo);
+            }
         }
 
         const miembro = Array.isArray(data) ? data[0] : data;

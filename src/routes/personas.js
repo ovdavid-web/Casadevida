@@ -55,7 +55,8 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
                     tipo,
                     estado,
                     fecha_inicio,
-                    fecha_fin
+                    fecha_fin,
+                    motivo_fin
                 ),
                 miembros (
                     id,
@@ -106,6 +107,7 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
                 estado: vinculo?.estado || persona.estado,
                 tipo_vinculo: vinculo?.tipo || 'sin vínculo',
                 fecha_inicio: vinculo?.fecha_inicio || null,
+                motivo_inactividad: vinculo?.estado === 'inactivo' ? vinculo.motivo_fin : null,
                 miembro,
                 cuenta: cuenta ? {
                     id: cuenta.id,

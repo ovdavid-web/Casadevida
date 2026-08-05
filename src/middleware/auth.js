@@ -59,6 +59,21 @@ const verificarToken = async (req, res, next) => {
             });
         }
 
+        if (usuario.persona_id) {
+            const { data: membresia, error: errorMembresia } = await supabase
+                .from('miembros')
+                .select('activo')
+                .eq('persona_id', usuario.persona_id)
+                .maybeSingle();
+            if (errorMembresia) throw errorMembresia;
+            if (membresia && !membresia.activo) {
+                return res.status(401).json({
+                    codigo: 'SESSION_REVOKED',
+                    error: 'Tu cuenta está desactivada. Contacta al administrador.'
+                });
+            }
+        }
+
         const passwordActualizadoEn = usuario.password_actualizado_en
             ? new Date(usuario.password_actualizado_en).getTime()
             : 0;

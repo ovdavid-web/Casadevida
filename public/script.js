@@ -1270,6 +1270,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     : 'Sin cuenta'}</span>
                             </div>
                         </div>
+                        ${!estaActivo && persona.motivo_inactividad ? `<div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MOTIVO DE INACTIVIDAD</div><div style="font-weight:600;font-size:14px;">${dato(persona.motivo_inactividad)}</div></div>` : ''}
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                             <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE BAUTISMO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_bautismo)}</div></div>
                             <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE INGRESO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_ingreso)}</div></div>
@@ -1307,6 +1308,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const rolesSeleccionadosEditor = () =>
         [...document.querySelectorAll('#editor-roles-lista input:checked')].map(input => input.value);
 
+    let motivoInactividadPendiente = '';
+    $('miembro-activo')?.addEventListener('change', () => {
+        if ($('miembro-activo').value === 'true') {
+            motivoInactividadPendiente = '';
+            return;
+        }
+        if (!motivoInactividadPendiente) {
+            $('miembro-motivo-inactividad').value = '';
+            $('miembro-motivo-inactividad-otro').value = '';
+            $('grupo-motivo-inactividad-otro').classList.add('hidden');
+            $('modal-motivo-inactividad').classList.remove('hidden');
+        }
+    });
+    $('miembro-motivo-inactividad')?.addEventListener('change', () => {
+        const esOtro = $('miembro-motivo-inactividad').value === 'Otro';
+        $('grupo-motivo-inactividad-otro').classList.toggle('hidden', !esOtro);
+        if (esOtro) $('miembro-motivo-inactividad-otro').focus();
+    });
+
     window.abrirFormNuevoMiembro = () => {
         cambiarTabDirectorio('miembros');
         const f = $('form-nuevo-miembro');
@@ -1318,6 +1338,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('persona-tipo-vinculo').disabled = false;
         $('persona-tipo-vinculo').value = 'invitado';
         $('miembro-activo').value = 'true';
+        $('miembro-motivo-inactividad').value = '';
+        $('miembro-motivo-inactividad-otro').value = '';
+        motivoInactividadPendiente = '';
         toggleCamposMembresia('invitado');
         if (f) {
             f.classList.remove('hidden');
@@ -1353,6 +1376,10 @@ document.addEventListener('DOMContentLoaded', () => {
             $('miembro-fecha-bautismo').value = m.fecha_bautismo || '';
             $('miembro-fecha-ingreso').value = m.fecha_ingreso || '';
             $('miembro-activo').value = String(Boolean(m.activo));
+            const motivoGuardado = persona.motivo_inactividad === 'Miembro desactivado administrativamente'
+                ? ''
+                : (persona.motivo_inactividad || '');
+            motivoInactividadPendiente = motivoGuardado;
             $('persona-tipo-vinculo').value = 'miembro';
             $('persona-tipo-vinculo').disabled = true;
             toggleCamposMembresia('miembro');
@@ -1395,6 +1422,16 @@ document.addEventListener('DOMContentLoaded', () => {
             fecha_ingreso:  tipoVinculo === 'miembro' ? ($('miembro-fecha-ingreso').value || null) : null,
             activo:         $('miembro-activo').value === 'true'
         };
+        if (!payload.activo) {
+            if (!motivoInactividadPendiente) {
+                $('miembro-motivo-inactividad').value = '';
+                $('miembro-motivo-inactividad-otro').value = '';
+                $('grupo-motivo-inactividad-otro').classList.add('hidden');
+                $('modal-motivo-inactividad').classList.remove('hidden');
+                return;
+            }
+            payload.motivo_inactividad = motivoInactividadPendiente;
+        }
         if (!miembroId) payload.tipo_vinculo = tipoVinculo;
         if (!payload.nombre) { toast('El nombre es requerido', 'error'); return; }
         if (crearCuenta && !payload.correo) {
@@ -1449,6 +1486,25 @@ document.addEventListener('DOMContentLoaded', () => {
         $('credencial-temporal-correo').textContent = data.cuenta?.correo || '';
         $('credencial-temporal-password').textContent = data.password_temporal || '';
         $('modal-credencial-temporal').classList.remove('hidden');
+    };
+
+    window.cerrarMotivoInactividad = (cancelar = true) => {
+        $('modal-motivo-inactividad').classList.add('hidden');
+        if (cancelar && !motivoInactividadPendiente) $('miembro-activo').value = 'true';
+    };
+
+    window.confirmarMotivoInactividad = () => {
+        const seleccionado = $('miembro-motivo-inactividad').value;
+        const motivo = seleccionado === 'Otro'
+            ? $('miembro-motivo-inactividad-otro').value.trim()
+            : seleccionado;
+        if (!motivo) {
+            toast('Selecciona o escribe el motivo de inactividad', 'error');
+            return;
+        }
+        motivoInactividadPendiente = motivo;
+        cerrarMotivoInactividad(false);
+        $('form-nuevo-miembro').querySelector('form').requestSubmit();
     };
 
     window.restablecerPasswordPersona = async () => {
@@ -2305,7 +2361,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!c) {
             c = document.createElement('div');
             c.id = 'toast-container';
-            c.style.cssText = 'position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:9999;';
+            c.style.cssText = 'position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;z-index:12000;';
             const s = document.createElement('style');
             s.textContent = `.toast{display:flex;align-items:center;gap:10px;background:#0f172a;color:white;padding:12px 18px;border-radius:10px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.2);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;max-width:320px;font-family:'Montserrat',sans-serif;}.toast.show{opacity:1;transform:translateY(0);}.toast.success{border-left:3px solid #10b981;}.toast.error{border-left:3px solid #ef4444;}`;
             document.head.appendChild(s);

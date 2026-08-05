@@ -557,7 +557,9 @@ body.modal-abierto { overflow: hidden; }
 .btn-restablecer-password { margin: 10px 0 0 23px; padding: 8px 12px; border: 1px solid #f59e0b; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 12px; font-weight: 700; cursor: pointer; }
 .btn-restablecer-password:hover { background: #ffedd5; }
 .editor-persona-actions { padding-top: 20px; }
-.modal-credencial-panel, .modal-password-panel { max-width: 480px; }
+.modal-credencial-panel, .modal-password-panel, .modal-motivo-panel { max-width: 480px; }
+.modal-motivo-panel .admin-form { padding: 20px 24px 4px; }
+#modal-motivo-inactividad { z-index: 11000; }
 .credencial-temporal { display: grid; gap: 12px; }
 .credencial-temporal > div { padding: 13px 14px; border: 1px solid var(--border); border-radius: 10px; background: #f1f3f5; }
 .credencial-temporal span { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }

@@ -2055,6 +2055,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     options: {
                         responsive: true,
+                        maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } } },
                         scales: {
                             y: { ticks: { display: !window.matchMedia('(max-width: 640px)').matches, callback: v => `$${(v/1000).toFixed(0)}k`, font: { size: 10 } } },

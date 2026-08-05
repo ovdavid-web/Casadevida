@@ -554,6 +554,8 @@ body.modal-abierto { overflow: hidden; }
 .editor-cuenta-estado.cuenta-existente { border-color: #a7f3d0; background: #ecfdf5; }
 .editor-cuenta-check { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 700; }
 .editor-cuenta-estado p { margin: 3px 0 0 23px; color: var(--muted); font-size: 11px; }
+.btn-restablecer-password { margin: 10px 0 0 23px; padding: 8px 12px; border: 1px solid #f59e0b; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 12px; font-weight: 700; cursor: pointer; }
+.btn-restablecer-password:hover { background: #ffedd5; }
 .editor-persona-actions { padding-top: 20px; }
 .modal-credencial-panel, .modal-password-panel { max-width: 480px; }
 .credencial-temporal { display: grid; gap: 12px; }

@@ -49,13 +49,24 @@ const verificarToken = async (req, res, next) => {
 
         const { data: usuario, error } = await supabase
             .from('usuarios')
-            .select('id, correo, rol, activo, persona_id')
+            .select('id, correo, rol, activo, persona_id, password_actualizado_en')
             .eq('id', decoded.id)
             .single();
         if (error || !usuario || !usuario.activo) {
             return res.status(401).json({
                 codigo: 'SESSION_REVOKED',
                 error: 'Tu cuenta está desactivada. Contacta al administrador.'
+            });
+        }
+
+        const passwordActualizadoEn = usuario.password_actualizado_en
+            ? new Date(usuario.password_actualizado_en).getTime()
+            : 0;
+        const tokenEmitidoEn = Number(decoded.iat || 0) * 1000;
+        if (passwordActualizadoEn && tokenEmitidoEn + 1000 < passwordActualizadoEn) {
+            return res.status(401).json({
+                codigo: 'SESSION_REVOKED',
+                error: 'Tu contraseña fue restablecida. Ingresa con la clave temporal.'
             });
         }
 

@@ -1298,6 +1298,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('#editor-roles-lista input').forEach(input => { input.checked = false; });
         $('crear-cuenta-acceso').checked = false;
         $('crear-cuenta-acceso').disabled = false;
+        $('btn-restablecer-password')?.classList.add('hidden');
         $('editor-cuenta-estado').classList.remove('cuenta-existente');
         $('editor-cuenta-estado').querySelector('p').textContent =
             'Usuario: correo personal · clave temporal válida por 72 horas.';
@@ -1364,6 +1365,8 @@ document.addEventListener('DOMContentLoaded', () => {
             $('editor-cuenta-estado').querySelector('p').textContent = persona.cuenta
                 ? `Cuenta ${persona.cuenta.activo ? 'activa' : 'bloqueada'}: ${persona.cuenta.correo}`
                 : 'Usuario: correo personal · clave temporal válida por 72 horas.';
+            const puedeRestablecer = Boolean(persona.cuenta) && getUsuario().rol === 'superadmin';
+            $('btn-restablecer-password')?.classList.toggle('hidden', !puedeRestablecer);
             $('form-miembro-titulo').textContent = 'Editar Persona';
             $('btn-guardar-miembro').textContent = 'Guardar cambios';
             $('modal-detalle').classList.add('hidden');
@@ -1440,15 +1443,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.mostrarCredencialTemporal = data => {
+        $('credencial-temporal-titulo').textContent = data.mensaje?.includes('temporal generada')
+            ? 'Contraseña restablecida'
+            : 'Acceso creado';
         $('credencial-temporal-correo').textContent = data.cuenta?.correo || '';
         $('credencial-temporal-password').textContent = data.password_temporal || '';
         $('modal-credencial-temporal').classList.remove('hidden');
+    };
+
+    window.restablecerPasswordPersona = async () => {
+        const personaId = $('persona-id-edicion').value;
+        if (!personaId) return;
+        if (!window.confirm('La contraseña actual dejará de funcionar. ¿Generar una clave temporal nueva?')) return;
+
+        const boton = $('btn-restablecer-password');
+        try {
+            boton.disabled = true;
+            boton.textContent = 'Generando...';
+            const credencial = await apiFetch('/api/usuarios/restablecer-password', {
+                method: 'POST',
+                body: JSON.stringify({ persona_id: personaId })
+            });
+            mostrarCredencialTemporal(credencial);
+        } catch (err) {
+            toast(err.message || 'No fue posible restablecer la contraseña', 'error');
+        } finally {
+            boton.disabled = false;
+            boton.textContent = 'Generar nueva clave temporal';
+        }
     };
 
     window.cerrarCredencialTemporal = () => {
         $('modal-credencial-temporal').classList.add('hidden');
         $('credencial-temporal-correo').textContent = '';
         $('credencial-temporal-password').textContent = '';
+        $('credencial-temporal-titulo').textContent = 'Acceso creado';
     };
 
     window.copiarCredencialTemporal = async () => {

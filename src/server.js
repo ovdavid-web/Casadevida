@@ -4,7 +4,9 @@ const dotenv  = require('dotenv');
 const path    = require('path');
 
 // Cargar variables de entorno
-dotenv.config();
+// En desarrollo local, el archivo del proyecto debe prevalecer sobre
+// variables antiguas heredadas por la sesión de Windows.
+dotenv.config({ override: true });
 
 const app  = express();
 const PORT = process.env.PORT || 3000;

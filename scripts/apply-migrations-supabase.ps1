@@ -14,7 +14,15 @@ $migrations = @(
     'database\007_catalogo_permisos.sql',
     'database\008_audiencias_eventos.sql',
     'database\009_departamentos_y_actividades.sql',
-    'database\010_vincular_miembros_personas.sql'
+    'database\010_vincular_miembros_personas.sql',
+    'database\011_alta_transaccional_miembros.sql',
+    'database\012_eliminar_area_servicio.sql',
+    'database\013_alta_personas_invitadas.sql',
+    'database\014_edicion_transaccional_miembros.sql',
+    'database\015_roles_por_persona.sql',
+    'database\016_corregir_textos_roles.sql',
+    'database\017_vincular_usuario_persona.sql',
+    'database\018_credenciales_temporales.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -114,6 +122,67 @@ from public.finanzas f
 left join public.miembros m on m.id = f.miembro_id
 where f.miembro_id is not null
   and m.id is null;
+select 'funcion_alta_miembro=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'crear_miembro_con_persona'
+  and p.pronargs = 9;
+select 'columna_area_servicio=' || count(*)
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'miembros'
+  and column_name = 'area_servicio';
+select 'funcion_alta_invitado=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'crear_persona_invitada'
+  and p.pronargs = 8;
+select 'funcion_editar_miembro=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'actualizar_miembro_con_persona'
+  and p.pronargs = 10;
+select 'tabla_persona_roles=' || count(*)
+from information_schema.tables
+where table_schema = 'public'
+  and table_name = 'persona_roles';
+select 'funcion_asignar_roles=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'asignar_roles_persona'
+  and p.pronargs = 3;
+select 'roles_texto_incorrecto=' || count(*)
+from public.roles
+where nombre like '%Ã%'
+   or descripcion like '%Ã%';
+select 'funcion_vincular_usuario=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'vincular_usuario_persona'
+  and p.pronargs = 3;
+select 'usuarios_sin_persona=' || count(*)
+from public.usuarios
+where persona_id is null;
+select 'funcion_crear_acceso=' || count(*)
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname = 'crear_usuario_para_persona'
+  and p.pronargs = 5;
+select 'columnas_credencial_temporal=' || count(*)
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'usuarios'
+  and column_name in (
+      'debe_cambiar_password',
+      'password_temporal_expira_en',
+      'password_actualizado_en'
+  );
 '@
 
     Write-Host ''

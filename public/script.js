@@ -22,7 +22,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     async function apiFetch(url, options = {}) {
-        const res  = await fetch(url, { headers: authHeaders(), ...options });
+        const res = await fetch(url, { headers: authHeaders(), ...options });
+        const tipoContenido = res.headers.get('content-type') || '';
+        if (!tipoContenido.includes('application/json')) {
+            throw new Error(res.status === 404
+                ? 'La función solicitada no está disponible. Reinicia el servidor e intenta nuevamente.'
+                : 'El servidor entregó una respuesta no válida.');
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error del servidor');
         return data;
@@ -215,6 +221,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // LOGIN
     // ============================================================
+    let tokenCambioPasswordInicial = null;
+
+    const esOficialConsulta = () => getUsuario().rol === 'oficial';
+    const esTesorero = () => getUsuario().rol === 'tesorero';
+    const tieneDirectorioLimitado = () => esOficialConsulta() || esTesorero();
+    const puedeGestionarEventos = () => !esOficialConsulta() && !esTesorero();
+
+    const configurarInterfazPorRol = usuario => {
+        const esOficial = usuario.rol === 'oficial';
+        const esPerfilTesorero = usuario.rol === 'tesorero';
+        const vistasOficial = new Set([
+            'vista-inicio-admin',
+            'vista-miembros',
+            'vista-mis-aportes'
+        ]);
+        const vistasTesorero = new Set([
+            'vista-inicio-admin',
+            'vista-miembros',
+            'vista-mis-aportes',
+            'vista-finanzas',
+            'vista-egresos',
+            'vista-finanzas-reporte'
+        ]);
+
+        document.querySelectorAll('#menu-admin .nav-btn').forEach(boton => {
+            const visible = esOficial
+                ? vistasOficial.has(boton.dataset.target)
+                : esPerfilTesorero
+                    ? vistasTesorero.has(boton.dataset.target)
+                    : true;
+            boton.parentElement?.classList.toggle('hidden', !visible);
+        });
+
+        ['menu-separador-finanzas', 'menu-titulo-finanzas'].forEach(id => {
+            $(id)?.classList.toggle('hidden', esOficial);
+        });
+        $('menu-oficial-aportes')?.classList.toggle('hidden', !esOficial && !esPerfilTesorero);
+
+        $('btn-nuevo-evento')?.classList.toggle('hidden', esOficial || esPerfilTesorero);
+        $('btn-nueva-cuenta')?.classList.toggle('hidden', esOficial);
+        ['btn-nueva-persona', 'btn-nueva-familia'].forEach(id => {
+            $(id)?.classList.toggle('hidden', esOficial || esPerfilTesorero);
+        });
+
+        if (esOficial || esPerfilTesorero) {
+            hide($('form-evento'));
+            hide($('form-nuevo-miembro'));
+            hide($('form-nueva-familia'));
+        }
+        if (esOficial) hide($('form-cuenta-pagar'));
+
+        const mesActual = String(
+            new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' })).getMonth() + 1
+        ).padStart(2, '0');
+        ['filtro-mes', 'dash-mes'].forEach(id => {
+            const selector = $(id);
+            const opcionTodos = selector?.querySelector('option[value=""]');
+            if (opcionTodos) opcionTodos.hidden = esPerfilTesorero;
+            if (esPerfilTesorero && selector && !selector.value) selector.value = mesActual;
+        });
+    };
+
+    const abrirSesionEnInterfaz = data => {
+        sessionStorage.setItem('cdv_token', data.token);
+        sessionStorage.setItem('cdv_usuario', JSON.stringify(data.usuario));
+
+        const u = data.usuario;
+        hide(vistaLogin); hide(navPublica); show(vistaDashboard);
+        nombreUsuario.textContent = u.nombre;
+        rolUsuario.textContent = u.rol;
+        userAvatar.textContent = u.nombre.charAt(0).toUpperCase();
+        configurarInterfazPorRol(u);
+
+        const esAdmin = ['superadmin', 'pastor', 'tesorero', 'oficial'].includes(u.rol);
+        if (esAdmin) { show(menuAdmin); hide(menuMiembro); cambiarVista('vista-inicio-admin'); }
+        else         { hide(menuAdmin); show(menuMiembro); cambiarVista('vista-perfil-miembro'); }
+
+        toast(`Bienvenido, ${u.nombre} 👋`, 'success');
+    };
+
     btnIngresar.addEventListener('click', async () => {
         const correo   = document.querySelector('.lf-input[type="text"]').value.trim();
         const password = document.querySelector('.lf-input[type="password"]').value;
@@ -233,21 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
 
             if (!res.ok) { toast(data.error || 'Credenciales incorrectas', 'error'); return; }
-
-            sessionStorage.setItem('cdv_token',   data.token);
-            sessionStorage.setItem('cdv_usuario', JSON.stringify(data.usuario));
-
-            const u = data.usuario;
-            hide(vistaLogin); hide(navPublica); show(vistaDashboard);
-            nombreUsuario.textContent = u.nombre;
-            rolUsuario.textContent    = u.rol;
-            userAvatar.textContent    = u.nombre.charAt(0).toUpperCase();
-
-            const esAdmin = ['superadmin', 'pastor', 'oficial'].includes(u.rol);
-            if (esAdmin) { show(menuAdmin); hide(menuMiembro); cambiarVista('vista-inicio-admin'); }
-            else         { hide(menuAdmin); show(menuMiembro); cambiarVista('vista-perfil-miembro'); }
-
-            toast(`Bienvenido, ${u.nombre} 👋`, 'success');
+            if (data.requiereCambioPassword) {
+                tokenCambioPasswordInicial = data.tokenCambio;
+                $('form-cambio-password-inicial').reset();
+                $('modal-cambio-password-inicial').classList.remove('hidden');
+                $('password-inicial-nueva').focus();
+                return;
+            }
+            abrirSesionEnInterfaz(data);
 
         } catch (err) {
             toast('Error de conexión. Intenta nuevamente.', 'error');
@@ -294,6 +373,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    $('form-cambio-password-inicial')?.addEventListener('submit', async evento => {
+        evento.preventDefault();
+        const password = $('password-inicial-nueva').value;
+        const confirmarPassword = $('password-inicial-confirmar').value;
+        const boton = $('btn-cambiar-password-inicial');
+        if (!tokenCambioPasswordInicial) {
+            toast('La activación ya no es válida. Inicia sesión nuevamente.', 'error');
+            return;
+        }
+
+        try {
+            boton.disabled = true;
+            boton.textContent = 'Guardando...';
+            const respuesta = await fetch('/api/auth/cambiar-password-inicial', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${tokenCambioPasswordInicial}`
+                },
+                body: JSON.stringify({
+                    password,
+                    confirmar_password: confirmarPassword
+                })
+            });
+            const data = await respuesta.json();
+            if (!respuesta.ok) throw new Error(data.error || 'No fue posible crear la contraseña');
+
+            tokenCambioPasswordInicial = null;
+            $('form-cambio-password-inicial').reset();
+            $('modal-cambio-password-inicial').classList.add('hidden');
+            abrirSesionEnInterfaz(data);
+        } catch (err) {
+            toast(err.message, 'error');
+        } finally {
+            boton.disabled = false;
+            boton.textContent = 'Crear contraseña e ingresar';
+        }
+    });
+
     // ============================================================
     // ROUTER
     // ============================================================
@@ -305,6 +423,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function cambiarVista(id) {
+        const vistasPermitidas = esOficialConsulta()
+            ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes']
+            : esTesorero()
+                ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes', 'vista-finanzas', 'vista-egresos', 'vista-finanzas-reporte']
+                : null;
+        if (vistasPermitidas && !vistasPermitidas.includes(id)) {
+            id = 'vista-inicio-admin';
+        }
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         const t = $(id); if (t) t.classList.remove('hidden');
@@ -316,6 +442,120 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'vista-finanzas-reporte') cargarReporte();
         if (id === 'vista-egresos')          cargarEgresos();
         if (id === 'vista-inicio-admin')      cargarAgenda();
+        if (id === 'vista-perfil-miembro')    cargarMiPerfil();
+        if (id === 'vista-mis-aportes')        cargarMisAportes();
+    }
+
+    async function cargarMiPerfil() {
+        const formatearFechaPerfil = valor => {
+            if (!valor) return '—';
+            const [anio, mes, dia] = valor.split('-').map(Number);
+            return new Intl.DateTimeFormat('es-CL', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            }).format(new Date(anio, mes - 1, dia));
+        };
+
+        try {
+            const { perfil } = await apiFetch('/api/personas/mi-perfil');
+            const palabras = perfil.nombre.trim().split(/\s+/).filter(Boolean);
+            const iniciales = palabras.length > 1
+                ? `${palabras[0][0]}${palabras[1][0]}`.toUpperCase()
+                : palabras[0]?.slice(0, 2).toUpperCase() || '—';
+            const activo = perfil.miembro?.activo !== false && perfil.estado !== 'inactivo';
+
+            $('mi-perfil-avatar').textContent = iniciales;
+            $('mi-perfil-nombre').textContent = perfil.nombre || 'Sin nombre';
+            $('mi-perfil-correo').textContent = perfil.correo || '—';
+            $('mi-perfil-telefono').textContent = perfil.telefono || '—';
+            $('mi-perfil-familia').textContent = perfil.miembro?.familia?.nombre || 'Sin familia asignada';
+            $('mi-perfil-roles').innerHTML = perfil.roles.length
+                ? `<span class="mi-perfil-role-chips">${perfil.roles
+                    .map(rol => `<span>${sanitizar(rol.nombre)}</span>`)
+                    .join('')}</span>`
+                : 'Sin roles asignados';
+            $('mi-perfil-ingreso').textContent = formatearFechaPerfil(perfil.miembro?.fecha_ingreso);
+            $('mi-perfil-bautismo').textContent = formatearFechaPerfil(perfil.miembro?.fecha_bautismo);
+            $('mi-perfil-estado').textContent = perfil.tipo_vinculo === 'miembro'
+                ? `Miembro ${activo ? 'Activo' : 'Inactivo'}`
+                : 'Invitado';
+            $('mi-perfil-estado').classList.toggle('active', activo);
+            $('mi-perfil-estado').classList.toggle('inactive', !activo);
+
+            const actividades = perfil.actividades || [];
+            $('mi-perfil-actividades').innerHTML = actividades.length
+                ? actividades.map(evento => {
+                    const fecha = new Date(evento.fecha_inicio);
+                    const fechaTexto = new Intl.DateTimeFormat('es-CL', {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).format(fecha);
+                    return `
+                        <article class="mi-actividad-item">
+                            <div class="mi-actividad-fecha">
+                                <span>${sanitizar(fechaTexto.split(',')[0])}</span>
+                                <strong>${sanitizar(String(fecha.getDate()).padStart(2, '0'))}</strong>
+                            </div>
+                            <div>
+                                <strong>${sanitizar(evento.titulo)}</strong>
+                                <span>${sanitizar(fechaTexto)}${evento.ubicacion ? ` · ${sanitizar(evento.ubicacion)}` : ''}</span>
+                            </div>
+                        </article>`;
+                }).join('')
+                : '<p class="mi-panel-vacio">No tienes actividades próximas por ahora.</p>';
+        } catch (err) {
+            $('mi-perfil-nombre').textContent = 'Perfil no disponible';
+            toast(err.message || 'No fue posible cargar tu perfil', 'error');
+        }
+    }
+
+    async function cargarMisAportes() {
+        const moneda = valor => `$${Number(valor || 0).toLocaleString('es-CL')}`;
+        const fecha = valor => {
+            if (!valor) return '—';
+            const [anio, mes, dia] = valor.split('-').map(Number);
+            return new Intl.DateTimeFormat('es-CL', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            }).format(new Date(anio, mes - 1, dia));
+        };
+
+        try {
+            const data = await apiFetch('/api/finanzas/mi-resumen');
+            const nombreMes = data.periodo.nombre.charAt(0).toUpperCase() + data.periodo.nombre.slice(1);
+            $('aporte-personal-periodo').textContent = data.aporte?.es_mes_actual
+                ? `APORTE DE ${nombreMes.toUpperCase()}`
+                : 'ÚLTIMO APORTE REGISTRADO';
+            $('aporte-personal-monto').textContent = data.aporte ? moneda(data.aporte.monto) : 'Sin registro';
+            $('aporte-personal-tipo').textContent = data.aporte?.tipo || 'No hay aportes asociados';
+            $('aporte-personal-fecha').textContent = data.aporte
+                ? `Fecha: ${fecha(data.aporte.fecha)}`
+                : 'Cuando exista un aporte asociado, aparecerá aquí.';
+
+            $('transparencia-periodo').textContent = `${nombreMes} ${data.periodo.anio}`;
+            $('transparencia-total-ingresos').textContent = moneda(data.transparencia.total_ingresos);
+            $('transparencia-total-egresos').textContent = moneda(data.transparencia.total_egresos);
+
+            const categorias = Object.entries(data.transparencia.egresos_por_categoria || {})
+                .sort(([, montoA], [, montoB]) => montoB - montoA);
+            $('transparencia-categorias').innerHTML = categorias.length
+                ? categorias.map(([categoria, monto]) => `
+                    <div class="transparencia-fila">
+                        <span>${sanitizar(categoria)}</span>
+                        <strong>${moneda(monto)}</strong>
+                    </div>`).join('')
+                : '<p class="mi-panel-vacio">No hay egresos registrados durante este mes.</p>';
+        } catch (err) {
+            $('aporte-personal-tipo').textContent = 'Información no disponible';
+            $('transparencia-categorias').innerHTML =
+                `<p class="mi-panel-vacio">${sanitizar(err.message || 'No fue posible cargar el resumen')}</p>`;
+            toast(err.message || 'No fue posible cargar los aportes', 'error');
+        }
     }
 
     // ============================================================
@@ -537,9 +777,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <strong>${cuenta.fecha_vencimiento.split('-').reverse().join('/')}</strong>
                         <span>${estadoFecha}</span>
                     </div>
-                    <div class="cuenta-pagar-acciones">
-                        <button type="button" class="btn-table" onclick="abrirModalConfirmarPago('${cuenta.id}')">${requiereEgreso ? 'Registrar egreso' : 'Marcar pagada'}</button>
-                    </div>
+                    ${esOficialConsulta() ? '' : `
+                        <div class="cuenta-pagar-acciones">
+                            <button type="button" class="btn-table" onclick="abrirModalConfirmarPago('${cuenta.id}')">${requiereEgreso ? 'Registrar egreso' : 'Marcar pagada'}</button>
+                        </div>
+                    `}
                 </article>`;
         }).join('');
     };
@@ -684,10 +926,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>${sanitizar(evento.tipo)}${evento.organizador ? ` · ${sanitizar(evento.organizador)}` : ''}</span>
                         ${evento.estado === 'suspendido' && evento.motivo_suspension ? `<p class="agenda-motivo-suspension"><strong>Motivo:</strong> ${sanitizar(evento.motivo_suspension)}</p>` : ''}
                     </div>
-                    <div class="agenda-acciones">
-                        <button type="button" onclick="editarEvento('${evento.id}')">Editar</button>
-                        ${evento.estado !== 'suspendido' ? `<button type="button" class="suspender" onclick="suspenderEvento('${evento.id}')">Suspender</button>` : ''}
-                    </div>
+                    ${puedeGestionarEventos() ? `
+                        <div class="agenda-acciones">
+                            <button type="button" onclick="editarEvento('${evento.id}')">Editar</button>
+                            ${evento.estado !== 'suspendido' ? `<button type="button" class="suspender" onclick="suspenderEvento('${evento.id}')">Suspender</button>` : ''}
+                        </div>
+                    ` : ''}
                 </article>`;
         }).join('');
     };
@@ -872,32 +1116,38 @@ document.addEventListener('DOMContentLoaded', () => {
     // MÓDULO MIEMBROS
     // ============================================================
     let todosMiembros = [];
+    let todasPersonas = [];
 
     async function cargarMiembros() {
         try {
-            const data = await apiFetch('/api/miembros');
-            todosMiembros = data.miembros || [];
-            const tbody   = document.querySelector('#vista-miembros .data-table tbody');
+            const data = await apiFetch('/api/personas');
+            todasPersonas = data.personas || [];
+            const tbody = document.querySelector('#vista-miembros .data-table tbody');
             if (!tbody) return;
 
             const contador = document.querySelector('#vista-miembros .table-count');
-            if (contador) contador.textContent = `${data.total} miembros`;
+            if (contador) contador.textContent = `${data.total} personas`;
 
             if (data.total === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No hay miembros registrados aún</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">No hay personas registradas aún</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = data.miembros.map(m => `
-                <tr>
-                    <td><div class="td-name"><div class="mini-av">${m.nombre.substring(0,2).toUpperCase()}</div>${m.nombre}</div></td>
-                    <td>${m.area_servicio || '—'}</td>
-                    <td><span class="badge ${m.activo ? 'active' : 'inactive'}">${m.activo ? 'Activo' : 'Inactivo'}</span></td>
-                    <td>${m.fecha_ingreso ? m.fecha_ingreso.split('-').reverse().join('/') : '—'}</td>
-                    <td><button class="btn-table" onclick="verDetalleMiembro('${m.id}')">Ver</button></td>
-                </tr>`).join('');
-
-        } catch (err) { toast('Error cargando miembros', 'error'); }
+            tbody.innerHTML = todasPersonas.map(persona => {
+                const esMiembro = persona.tipo_vinculo === 'miembro';
+                const estaActivo = persona.estado === 'activo';
+                return `
+                    <tr>
+                        <td><div class="td-name"><div class="mini-av">${sanitizar(persona.nombre.substring(0,2).toUpperCase())}</div>${sanitizar(persona.nombre)}</div></td>
+                        <td><span class="badge ${esMiembro ? 'active' : 'new'}">${esMiembro ? 'Miembro' : 'Invitado'}</span></td>
+                        <td><span class="badge ${estaActivo ? 'active' : 'inactive'}">${estaActivo ? 'Activo' : 'Inactivo'}</span></td>
+                        <td>${persona.fecha_inicio ? persona.fecha_inicio.split('-').reverse().join('/') : '—'}</td>
+                        <td>${tieneDirectorioLimitado() ? '' : `<button class="btn-table" onclick="verDetallePersona('${persona.id}')">Ver</button>`}</td>
+                    </tr>`;
+            }).join('');
+        } catch (err) {
+            toast('Error cargando personas', 'error');
+        }
     }
 
     $('buscar-miembro')?.addEventListener('input', e => {
@@ -906,30 +1156,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const filas = document.querySelectorAll('#vista-miembros .data-table tbody tr');
         let visibles = 0;
 
-        todosMiembros.forEach((m, indice) => {
-            const coincide = normalizar(m.nombre).includes(busqueda) ||
-                normalizar(m.rut).includes(busqueda) ||
-                normalizar(m.area_servicio).includes(busqueda);
+        todasPersonas.forEach((persona, indice) => {
+            const coincide = normalizar(persona.nombre).includes(busqueda) ||
+                normalizar(persona.rut).includes(busqueda) ||
+                normalizar(persona.tipo_vinculo).includes(busqueda);
             if (filas[indice]) filas[indice].style.display = coincide ? '' : 'none';
             if (coincide) visibles++;
         });
 
         const contador = document.querySelector('#vista-miembros .table-count');
-        if (contador) contador.textContent = `${visibles} miembros`;
+        if (contador) contador.textContent = `${visibles} personas`;
     });
 
-    window.verDetalleMiembro = async miembroId => {
+    window.verDetallePersona = async personaId => {
         try {
-            const [dataMiembro, dataFamilias] = await Promise.all([
-                apiFetch(`/api/miembros/${miembroId}`),
-                apiFetch('/api/familias')
-            ]);
-            const m = dataMiembro.miembro;
-            const familia = (dataFamilias.familias || []).find(f =>
-                (f.miembros || []).some(integrante => integrante.id === m.id)
-            );
+            let persona = todasPersonas.find(item => item.id === personaId);
+            if (!persona) {
+                const data = await apiFetch('/api/personas');
+                todasPersonas = data.personas || [];
+                persona = todasPersonas.find(item => item.id === personaId);
+            }
+            if (!persona) throw new Error('Persona no encontrada');
+
+            const esMiembro = persona.tipo_vinculo === 'miembro' && persona.miembro;
+            let familia = null;
+            let rolesPersona = [];
+            if (esMiembro) {
+                const [dataFamilias, dataRoles] = await Promise.all([
+                    apiFetch('/api/familias'),
+                    apiFetch(`/api/personas/${persona.id}/roles`)
+                ]);
+                familia = (dataFamilias.familias || []).find(grupo =>
+                    (grupo.miembros || []).some(integrante => integrante.id === persona.miembro.id)
+                );
+                rolesPersona = dataRoles.roles || [];
+            }
+
             const fecha = valor => valor ? valor.split('-').reverse().join('/') : '—';
             const dato = valor => valor ? sanitizar(valor) : '—';
+            const estaActivo = persona.estado === 'activo';
             const contenido = $('modal-detalle-contenido');
             if (!contenido) return;
 
@@ -937,80 +1202,139 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="detalle-miembro" style="display:grid;gap:12px;">
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
                         <div>
-                            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MIEMBRO</div>
-                            <div style="font-size:18px;font-weight:800;">${dato(m.nombre)}</div>
+                            <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${esMiembro ? 'MIEMBRO' : 'INVITADO'}</div>
+                            <div style="font-size:18px;font-weight:800;">${dato(persona.nombre)}</div>
                         </div>
-                        <span class="badge ${m.activo ? 'active' : 'inactive'}">${m.activo ? 'Activo' : 'Inactivo'}</span>
+                        <span class="badge ${estaActivo ? 'active' : 'inactive'}">${estaActivo ? 'Activo' : 'Inactivo'}</span>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">RUT</div><div style="font-weight:600;font-size:14px;">${dato(m.rut)}</div></div>
-                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TELÉFONO</div><div style="font-weight:600;font-size:14px;">${dato(m.telefono)}</div></div>
+                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">RUT</div><div style="font-weight:600;font-size:14px;">${dato(persona.rut)}</div></div>
+                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TELÉFONO</div><div style="font-weight:600;font-size:14px;">${dato(persona.telefono)}</div></div>
                     </div>
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORREO</div><div style="font-weight:600;font-size:14px;">${dato(m.correo)}</div></div>
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">DIRECCIÓN</div><div style="font-weight:600;font-size:14px;">${dato(m.direccion)}</div></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ÁREA DE SERVICIO</div><div style="font-weight:600;font-size:14px;">${dato(m.area_servicio)}</div></div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORREO</div><div style="font-weight:600;font-size:14px;">${dato(persona.correo)}</div></div>
+                    ${esMiembro ? `
                         <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FAMILIA</div><div style="font-weight:600;font-size:14px;">${familia ? dato(familia.nombre) : 'Sin grupo familiar'}</div></div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE BAUTISMO</div><div style="font-weight:600;font-size:14px;">${fecha(m.fecha_bautismo)}</div></div>
-                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE INGRESO</div><div style="font-weight:600;font-size:14px;">${fecha(m.fecha_ingreso)}</div></div>
-                    </div>
-                    <button type="button" class="btn-action" style="width:100%;margin-top:4px;" onclick="editarMiembro('${m.id}')">Editar información</button>
+                        <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                            <div style="font-size:11px;color:var(--muted);margin-bottom:7px;">ROLES</div>
+                            <div class="detalle-roles">
+                                ${rolesPersona.length
+                                    ? rolesPersona.map(rol => `<span class="detalle-rol-chip">${dato(rol.nombre)}</span>`).join('')
+                                    : '<span style="font-size:13px;color:var(--muted);">Sin roles asignados</span>'}
+                            </div>
+                        </div>
+                        <div style="background:var(--paper);border-radius:10px;padding:14px;">
+                            <div style="font-size:11px;color:var(--muted);margin-bottom:7px;">CUENTA DE ACCESO</div>
+                            <div class="detalle-cuenta">
+                                <div class="detalle-cuenta-info">
+                                    <strong>${persona.cuenta ? dato(persona.cuenta.correo) : 'Sin cuenta vinculada'}</strong>
+                                    <span>${persona.cuenta
+                                        ? (persona.cuenta.activo ? 'Cuenta activa' : 'Cuenta bloqueada')
+                                        : 'Este miembro todavía no puede iniciar sesión'}</span>
+                                </div>
+                                <span class="badge ${persona.cuenta?.activo ? 'active' : 'inactive'}">${persona.cuenta
+                                    ? (persona.cuenta.activo ? 'Activa' : 'Bloqueada')
+                                    : 'Sin cuenta'}</span>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE BAUTISMO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_bautismo)}</div></div>
+                            <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE INGRESO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_ingreso)}</div></div>
+                        </div>
+                        ${tieneDirectorioLimitado() ? '' : `<button type="button" class="btn-action" style="width:100%;margin-top:4px;" onclick="editarMiembro('${persona.miembro.id}')">Editar persona</button>`}
+                    ` : `
+                        <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">VÍNCULO DESDE</div><div style="font-weight:600;font-size:14px;">${fecha(persona.fecha_inicio)}</div></div>
+                    `}
                 </div>`;
             $('modal-detalle').classList.remove('hidden');
         } catch (err) {
-            toast(err.message || 'Error cargando miembro', 'error');
+            toast(err.message || 'Error cargando persona', 'error');
         }
     };
 
     window.toggleForm = id => { const f = $(id); if (f) f.classList.toggle('hidden'); };
+
+    window.toggleCamposMembresia = tipo => {
+        $('campos-membresia')?.classList.toggle('hidden', tipo !== 'miembro');
+        $('configuracion-miembro')?.classList.toggle('hidden', tipo !== 'miembro');
+        if (tipo !== 'miembro') $('crear-cuenta-acceso').checked = false;
+    };
+
+    const limpiarConfiguracionPersona = () => {
+        $('persona-id-edicion').value = '';
+        document.querySelectorAll('#editor-roles-lista input').forEach(input => { input.checked = false; });
+        $('crear-cuenta-acceso').checked = false;
+        $('crear-cuenta-acceso').disabled = false;
+        $('editor-cuenta-estado').classList.remove('cuenta-existente');
+        $('editor-cuenta-estado').querySelector('p').textContent =
+            'Usuario: correo personal · clave temporal válida por 72 horas.';
+    };
+
+    const rolesSeleccionadosEditor = () =>
+        [...document.querySelectorAll('#editor-roles-lista input:checked')].map(input => input.value);
 
     window.abrirFormNuevoMiembro = () => {
         cambiarTabDirectorio('miembros');
         const f = $('form-nuevo-miembro');
         f?.querySelector('form')?.reset();
         $('miembro-id').value = '';
-        $('form-miembro-titulo').textContent = 'Registrar Nuevo Miembro';
+        limpiarConfiguracionPersona();
+        $('form-miembro-titulo').textContent = 'Registrar Nueva Persona';
         $('btn-guardar-miembro').textContent = 'Guardar';
-        $('miembro-area').value = 'Sin asignar';
+        $('persona-tipo-vinculo').disabled = false;
+        $('persona-tipo-vinculo').value = 'invitado';
         $('miembro-activo').value = 'true';
+        toggleCamposMembresia('invitado');
         if (f) {
             f.classList.remove('hidden');
-            f.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.body.classList.add('modal-abierto');
+            $('miembro-nombre').focus();
         }
     };
 
     window.cerrarFormMiembro = () => {
         $('form-nuevo-miembro')?.classList.add('hidden');
+        document.body.classList.remove('modal-abierto');
         $('form-nuevo-miembro')?.querySelector('form')?.reset();
         $('miembro-id').value = '';
+        limpiarConfiguracionPersona();
+        $('persona-tipo-vinculo').disabled = false;
+        toggleCamposMembresia('invitado');
     };
 
     window.editarMiembro = async miembroId => {
         try {
             const miembroLocal = todosMiembros.find(miembro => miembro.id === miembroId);
             const m = miembroLocal || (await apiFetch(`/api/miembros/${miembroId}`)).miembro;
-            const selectArea = $('miembro-area');
-            if (m.area_servicio && ![...selectArea.options].some(opcion => opcion.value === m.area_servicio)) {
-                selectArea.add(new Option(m.area_servicio, m.area_servicio));
-            }
-
+            const persona = todasPersonas.find(item => item.miembro?.id === m.id);
+            if (!persona) throw new Error('No fue posible localizar la persona asociada');
+            const dataRoles = await apiFetch(`/api/personas/${persona.id}/roles`);
+            const rolesAsignados = new Set((dataRoles.roles || []).map(rol => rol.codigo));
             $('miembro-id').value = m.id;
+            $('persona-id-edicion').value = persona.id;
             $('miembro-nombre').value = m.nombre || '';
             $('miembro-rut').value = m.rut || '';
             $('miembro-correo').value = m.correo || '';
             $('miembro-telefono').value = m.telefono || '';
-            $('miembro-direccion').value = m.direccion || '';
             $('miembro-fecha-bautismo').value = m.fecha_bautismo || '';
             $('miembro-fecha-ingreso').value = m.fecha_ingreso || '';
-            selectArea.value = m.area_servicio || 'Sin asignar';
             $('miembro-activo').value = String(Boolean(m.activo));
-            $('form-miembro-titulo').textContent = 'Editar Miembro';
+            $('persona-tipo-vinculo').value = 'miembro';
+            $('persona-tipo-vinculo').disabled = true;
+            toggleCamposMembresia('miembro');
+            document.querySelectorAll('#editor-roles-lista input').forEach(input => {
+                input.checked = rolesAsignados.has(input.value);
+            });
+            $('crear-cuenta-acceso').checked = false;
+            $('crear-cuenta-acceso').disabled = Boolean(persona.cuenta);
+            $('editor-cuenta-estado').classList.toggle('cuenta-existente', Boolean(persona.cuenta));
+            $('editor-cuenta-estado').querySelector('p').textContent = persona.cuenta
+                ? `Cuenta ${persona.cuenta.activo ? 'activa' : 'bloqueada'}: ${persona.cuenta.correo}`
+                : 'Usuario: correo personal · clave temporal válida por 72 horas.';
+            $('form-miembro-titulo').textContent = 'Editar Persona';
             $('btn-guardar-miembro').textContent = 'Guardar cambios';
             $('modal-detalle').classList.add('hidden');
             $('form-nuevo-miembro').classList.remove('hidden');
-            $('form-nuevo-miembro').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.body.classList.add('modal-abierto');
             $('miembro-nombre').focus();
         } catch (err) {
             toast(err.message || 'No fue posible cargar el miembro', 'error');
@@ -1020,33 +1344,88 @@ document.addEventListener('DOMContentLoaded', () => {
     window.registrarMiembro = async e => {
         e.preventDefault();
         const miembroId = $('miembro-id').value;
+        let personaId = $('persona-id-edicion').value;
+        const tipoVinculo = miembroId ? 'miembro' : $('persona-tipo-vinculo').value;
+        const crearCuenta = tipoVinculo === 'miembro'
+            && !$('crear-cuenta-acceso').disabled
+            && $('crear-cuenta-acceso').checked;
         const payload = {
             nombre:         $('miembro-nombre').value.trim(),
             rut:            $('miembro-rut').value.trim() || null,
             correo:         $('miembro-correo').value.trim() || null,
             telefono:       $('miembro-telefono').value.trim() || null,
-            direccion:      $('miembro-direccion').value.trim() || null,
-            fecha_bautismo: $('miembro-fecha-bautismo').value || null,
-            fecha_ingreso:  $('miembro-fecha-ingreso').value || null,
-            area_servicio:  $('miembro-area').value,
+            fecha_bautismo: tipoVinculo === 'miembro' ? ($('miembro-fecha-bautismo').value || null) : null,
+            fecha_ingreso:  tipoVinculo === 'miembro' ? ($('miembro-fecha-ingreso').value || null) : null,
             activo:         $('miembro-activo').value === 'true'
         };
+        if (!miembroId) payload.tipo_vinculo = tipoVinculo;
         if (!payload.nombre) { toast('El nombre es requerido', 'error'); return; }
+        if (crearCuenta && !payload.correo) {
+            toast('Debes ingresar el correo que se usará para iniciar sesión', 'error');
+            $('miembro-correo').focus();
+            return;
+        }
         const boton = $('btn-guardar-miembro');
         try {
             boton.disabled = true;
             boton.textContent = 'Guardando...';
-            await apiFetch(miembroId ? `/api/miembros/${miembroId}` : '/api/miembros', {
+            const resultadoPersona = await apiFetch(miembroId ? `/api/miembros/${miembroId}` : '/api/personas', {
                 method: miembroId ? 'PUT' : 'POST',
                 body: JSON.stringify(payload)
             });
-            toast(miembroId ? 'Miembro actualizado correctamente' : `${payload.nombre} registrado ✓`, 'success');
+            if (!personaId) {
+                personaId = resultadoPersona.persona?.id
+                    || resultadoPersona.registro?.persona_id
+                    || resultadoPersona.registro?.id;
+            }
+            if (tipoVinculo === 'miembro' && personaId) {
+                await apiFetch(`/api/personas/${personaId}/roles`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ roles: rolesSeleccionadosEditor() })
+                });
+            }
+            let credencial = null;
+            if (crearCuenta && personaId) {
+                credencial = await apiFetch('/api/usuarios/crear-para-persona', {
+                    method: 'POST',
+                    body: JSON.stringify({ persona_id: personaId, correo: payload.correo })
+                });
+            }
+            const mensajeAlta = tipoVinculo === 'miembro'
+                ? `${payload.nombre} registrado como miembro ✓`
+                : `${payload.nombre} registrado como invitado ✓`;
+            toast(miembroId ? 'Persona actualizada correctamente' : mensajeAlta, 'success');
             cerrarFormMiembro();
             await cargarMiembros();
+            if (credencial) mostrarCredencialTemporal(credencial);
         } catch (err) { toast(err.message || 'Error al registrar', 'error'); }
         finally {
             boton.disabled = false;
             boton.textContent = miembroId ? 'Guardar cambios' : 'Guardar';
+        }
+    };
+
+    window.mostrarCredencialTemporal = data => {
+        $('credencial-temporal-correo').textContent = data.cuenta?.correo || '';
+        $('credencial-temporal-password').textContent = data.password_temporal || '';
+        $('modal-credencial-temporal').classList.remove('hidden');
+    };
+
+    window.cerrarCredencialTemporal = () => {
+        $('modal-credencial-temporal').classList.add('hidden');
+        $('credencial-temporal-correo').textContent = '';
+        $('credencial-temporal-password').textContent = '';
+    };
+
+    window.copiarCredencialTemporal = async () => {
+        const correo = $('credencial-temporal-correo').textContent;
+        const password = $('credencial-temporal-password').textContent;
+        const instrucciones = `Casa de Vida\nUsuario: ${correo}\nContraseña temporal: ${password}\n\nIngresa a la plataforma y crea tu contraseña personal. Esta clave temporal vence en 72 horas y solo puede usarse para el primer acceso.`;
+        try {
+            await navigator.clipboard.writeText(instrucciones);
+            toast('Instrucciones copiadas', 'success');
+        } catch {
+            toast('No fue posible copiar automáticamente', 'error');
         }
     };
 
@@ -1078,15 +1457,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="font-weight:700;font-size:15px;">${f.nombre}</span>
                         <span style="font-size:12px;color:var(--muted);margin-left:10px;">${integrantes.length} integrante${integrantes.length !== 1 ? 's' : ''}</span>
                     </div>
-                    <button class="btn-table" onclick="mostrarAgregarIntegrante('${f.id}', '${f.nombre}')">+ Agregar</button>
+                    ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" onclick="mostrarAgregarIntegrante('${f.id}', '${f.nombre}')">+ Agregar</button>`}
                 </div>
                 ${integrantes.length === 0
                     ? `<div style="padding:12px 20px;color:var(--muted);font-size:13px;">Sin integrantes aún</div>`
                     : integrantes.map(m => `
                         <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid var(--border);">
                             <div class="mini-av">${m.nombre.substring(0,2).toUpperCase()}</div>
-                            <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div><div style="font-size:12px;color:var(--muted);">${m.area_servicio || 'Sin área'}</div></div>
-                            <button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>
+                            <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div></div>
+                            ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>`}
                         </div>`).join('')
                 }
             </div>`;
@@ -1101,8 +1480,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lista.innerHTML = sinFamilia.map(m => `
             <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--border);">
                 <div class="mini-av" style="background:var(--border);">${m.nombre.substring(0,2).toUpperCase()}</div>
-                <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div><div style="font-size:12px;color:var(--muted);">${m.area_servicio || 'Sin área'}</div></div>
-                <button class="btn-table" onclick="mostrarAsignarFamilia('${m.id}', '${m.nombre}')">Asignar familia</button>
+                <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div></div>
+                ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" onclick="mostrarAsignarFamilia('${m.id}', '${m.nombre}')">Asignar familia</button>`}
             </div>`).join('');
     }
 
@@ -1297,11 +1676,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tbody.innerHTML = slice.map(r => `
             <tr>
-                <td>${r.tipo}</td>
+                        <td>${sanitizar(r.tipo)}</td>
                 <td class="monto-cell">$${Number(r.monto).toLocaleString('es-CL')}</td>
                 <td>${r.fecha ? r.fecha.split('-').reverse().join('/') : '—'}</td>
-                <td>${r.nombre_servicio || '—'}</td>
-                <td><button class="btn-table" onclick="verDetalleIngreso(${JSON.stringify(r).replace(/"/g, '&quot;')})">Ver</button></td>
+                        <td>${sanitizar(r.nombre_servicio || '—')}</td>
+                        <td><button class="btn-table" onclick="verDetalleIngresoPorId('${sanitizar(r.id)}')">Ver</button></td>
             </tr>`).join('');
     }
 
@@ -1423,16 +1802,16 @@ document.addEventListener('DOMContentLoaded', () => {
         contenido.innerHTML = `
             <div style="display:grid;gap:12px;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TIPO</div><div style="font-weight:700;font-size:14px;">${r.tipo}</div></div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TIPO</div><div style="font-weight:700;font-size:14px;">${sanitizar(r.tipo)}</div></div>
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MONTO</div><div style="font-weight:700;font-size:14px;color:#10b981;">$${Number(r.monto).toLocaleString('es-CL')}</div></div>
                 </div>
-                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">SERVICIO</div><div style="font-weight:600;font-size:14px;">${r.nombre_servicio || '—'}</div></div>
+                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">SERVICIO</div><div style="font-weight:600;font-size:14px;">${sanitizar(r.nombre_servicio || '—')}</div></div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA</div><div style="font-weight:600;font-size:14px;">${fecha}</div></div>
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">REGISTRADO</div><div style="font-weight:600;font-size:13px;">${creado}</div></div>
                 </div>
-                ${r.tipo === 'Diezmo de Miembro' ? `<div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORRESPONDE A</div><div style="font-weight:600;font-size:14px;">${r.asociado_nombre || 'Anónimo'}</div></div>` : ''}
-                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div><div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${r.observaciones || 'Sin observaciones'}</div></div>
+                ${r.tipo === 'Diezmo de Miembro' ? `<div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORRESPONDE A</div><div style="font-weight:600;font-size:14px;">${sanitizar(r.asociado_nombre || 'Anónimo')}</div></div>` : ''}
+                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div><div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${sanitizar(r.observaciones || 'Sin observaciones')}</div></div>
             </div>`;
         $('modal-detalle').classList.remove('hidden');
     };
@@ -1440,6 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // MÓDULO EGRESOS
     // ============================================================
+    let egresosTodos = [];
     const ITEMS_CATEGORIA = {
         'Arriendo local':'Infraestructura','Electricidad':'Infraestructura','Agua':'Infraestructura',
         'Internet':'Infraestructura','Gas':'Infraestructura','Aporte pastoral':'Pastoral',
@@ -1465,6 +1845,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (salida) salida.textContent = total === null ? '—' : `-$${total.toLocaleString('es-CL')}`;
     };
 
+    window.verDetalleIngresoPorId = id => {
+        const registro = finanzasTodos.find(item => String(item.id) === String(id));
+        if (!registro) return toast('No fue posible encontrar el registro', 'error');
+        window.verDetalleIngreso(registro);
+    };
+
     window.detectarCategoriaEgreso = valor => {
         const cat = ITEMS_CATEGORIA[valor] || 'Otro';
         const input = $('categoria-egreso');
@@ -1477,6 +1863,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const data    = await apiFetch('/api/egresos');
             const egresos = data.egresos || [];
+            egresosTodos = egresos;
 
             const contador = $('egresos-contador');
             if (contador) contador.textContent = `${egresos.length} registros`;
@@ -1512,11 +1899,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             tbody.innerHTML = egresos.map(r => `
                 <tr>
-                    <td>${r.proveedor ? `${r.item} <span style="font-size:11px;color:var(--muted);">(${r.proveedor})</span>` : r.item}</td>
-                    <td><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:${BADGE_COLOR[r.categoria] || '#6b7280'}22;color:${BADGE_COLOR[r.categoria] || '#6b7280'};font-weight:600;">${r.categoria}</span></td>
+                    <td>${r.proveedor ? `${sanitizar(r.item)} <span style="font-size:11px;color:var(--muted);">(${sanitizar(r.proveedor)})</span>` : sanitizar(r.item)}</td>
+                    <td><span style="font-size:11px;padding:2px 8px;border-radius:6px;background:${BADGE_COLOR[r.categoria] || '#6b7280'}22;color:${BADGE_COLOR[r.categoria] || '#6b7280'};font-weight:600;">${sanitizar(r.categoria)}</span></td>
                     <td style="color:#ef4444;font-weight:600;">-$${Number(r.monto).toLocaleString('es-CL')}</td>
                     <td>${r.fecha ? r.fecha.split('-').reverse().join('/') : '—'}</td>
-                    <td><button class="btn-table" onclick="verDetalleEgreso(${JSON.stringify(r).replace(/"/g, '&quot;')})">Ver</button></td>
+                    <td><button class="btn-table" onclick="verDetalleEgresoPorId('${sanitizar(r.id)}')">Ver</button></td>
                 </tr>`).join('');
 
         } catch (err) { toast('Error cargando egresos', 'error'); }
@@ -1558,18 +1945,18 @@ document.addEventListener('DOMContentLoaded', () => {
         contenido.innerHTML = `
             <div class="detalle-egreso" style="display:grid;gap:12px;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ÍTEM</div><div style="font-weight:700;font-size:14px;">${r.item}</div></div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">ÍTEM</div><div style="font-weight:700;font-size:14px;">${sanitizar(r.item)}</div></div>
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MONTO</div><div style="font-weight:700;font-size:14px;color:#ef4444;">-$${Number(r.monto).toLocaleString('es-CL')}</div></div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CATEGORÍA</div><div style="font-weight:600;font-size:14px;">${r.categoria}</div></div>
-                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">PROVEEDOR</div><div style="font-weight:600;font-size:14px;">${r.proveedor || '—'}</div></div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CATEGORÍA</div><div style="font-weight:600;font-size:14px;">${sanitizar(r.categoria)}</div></div>
+                    <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">PROVEEDOR</div><div style="font-weight:600;font-size:14px;">${sanitizar(r.proveedor || '—')}</div></div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA</div><div style="font-weight:600;font-size:14px;">${fecha}</div></div>
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">REGISTRADO</div><div style="font-weight:600;font-size:13px;">${creado}</div></div>
                 </div>
-                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div><div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${r.observaciones || 'Sin observaciones'}</div></div>
+                <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:6px;">OBSERVACIONES</div><div style="font-size:14px;line-height:1.5;color:${r.observaciones ? 'var(--text)' : 'var(--muted)'};">${sanitizar(r.observaciones || 'Sin observaciones')}</div></div>
             </div>`;
         $('modal-detalle').classList.remove('hidden');
     };
@@ -1840,6 +2227,12 @@ document.addEventListener('DOMContentLoaded', () => {
         mostrarSeccion();
     };
 
+    window.verDetalleEgresoPorId = id => {
+        const registro = egresosTodos.find(item => String(item.id) === String(id));
+        if (!registro) return toast('No fue posible encontrar el egreso', 'error');
+        window.verDetalleEgreso(registro);
+    };
+
     // ============================================================
     // TOASTS
     // ============================================================
@@ -1856,7 +2249,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const t = document.createElement('div');
         t.className = `toast ${tipo}`;
-        t.innerHTML = `<span>${tipo === 'success' ? '✓' : '⚠'}</span><span>${msg}</span>`;
+        t.innerHTML = `<span>${tipo === 'success' ? '✓' : '⚠'}</span><span>${sanitizar(msg)}</span>`;
         c.appendChild(t);
         requestAnimationFrame(() => t.classList.add('show'));
         setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3200);

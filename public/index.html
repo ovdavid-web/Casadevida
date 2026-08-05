@@ -436,15 +436,7 @@
                     <p class="login-sub">Ingresa tus credenciales para continuar.</p>
                     <div class="lf-group"><label>Usuario o Correo</label><input type="text" placeholder="tu@casadevida.cl" class="lf-input"></div>
                     <div class="lf-group"><label>Contraseña</label><input type="password" placeholder="••••••••" class="lf-input"></div>
-                    <div class="lf-group">
-                        <label>Simular ingreso como</label>
-                        <select id="simulador-rol" class="lf-input">
-                            <option value="admin">Administrador / Pastor</option>
-                            <option value="miembro">Miembro</option>
-                        </select>
-                    </div>
                     <button id="btn-ingresar" class="btn-login">Ingresar →</button>
-                    <p class="login-nota">* Simulador de roles · Backend en desarrollo</p>
                 </div>
             </div>
         </div>
@@ -475,10 +467,11 @@
                     <li class="nav-section-title">ADMINISTRACIÓN</li>
                     <li><button class="nav-btn active" data-target="vista-inicio-admin"><span class="nav-icon">⬛</span> Panel General</button></li>
                     <li><button class="nav-btn" data-target="vista-miembros"><span class="nav-icon">👥</span> Directorio</button></li>
+                    <li id="menu-oficial-aportes" class="hidden"><button class="nav-btn" data-target="vista-mis-aportes"><span class="nav-icon">💳</span> Mis Aportes</button></li>
                     <li><button class="nav-btn" data-target="vista-visitas"><span class="nav-icon">👤</span> Visitas</button></li>
                     <li><button class="nav-btn" data-target="vista-servicios"><span class="nav-icon">🗓️</span> Servicios y Roles</button></li>
-                    <li class="nav-separator"></li>
-                    <li class="nav-section-title">FINANZAS</li>
+                    <li id="menu-separador-finanzas" class="nav-separator"></li>
+                    <li id="menu-titulo-finanzas" class="nav-section-title">FINANZAS</li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
@@ -497,7 +490,7 @@
                 <section id="vista-inicio-admin" class="view-section hidden">
                     <div class="page-header agenda-page-header">
                         <div><h1>Panel General</h1><p>Agenda y próximas actividades de Casa de Vida</p></div>
-                        <button class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nuevo evento</button>
+                        <button id="btn-nuevo-evento" class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nuevo evento</button>
                     </div>
 
                     <div class="panel-resumen" aria-label="Resumen general">
@@ -538,7 +531,7 @@
                     <div class="table-card cuentas-panel">
                         <div class="cuentas-panel-header">
                             <div><h3>Cuentas por pagar</h3><span id="cuentas-pagar-contador">Sin cuentas pendientes</span></div>
-                            <button class="btn-table" type="button" onclick="toggleFormCuentaPagar()">+ Nueva cuenta</button>
+                            <button id="btn-nueva-cuenta" class="btn-table" type="button" onclick="toggleFormCuentaPagar()">+ Nueva cuenta</button>
                         </div>
                         <form id="form-cuenta-pagar" class="cuenta-pagar-form hidden" onsubmit="guardarCuentaPagar(event)">
                             <div class="form-grid cuenta-pagar-grid">
@@ -631,40 +624,76 @@
                 </section>
                 <section id="vista-miembros" class="view-section hidden">
                     <div class="page-header">
-                        <div><h1>Directorio de Miembros</h1><p>Gestión del directorio de la iglesia</p></div>
-                        <button class="btn-action" onclick="abrirFormNuevoMiembro()">+ Nuevo Miembro</button>
+                        <div><h1>Directorio de Personas</h1><p>Invitados y miembros de Casa de Vida</p></div>
+                        <button id="btn-nueva-persona" class="btn-action" onclick="abrirFormNuevoMiembro()">+ Nueva Persona</button>
                     </div>
 
                     <!-- Pestañas -->
                     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:24px;">
-                        <button id="tab-miembros" onclick="cambiarTabDirectorio('miembros')" style="padding:10px 20px;font-size:13px;cursor:pointer;background:none;border:none;border-bottom:2px solid var(--text);font-weight:600;color:var(--text);">Miembros</button>
+                        <button id="tab-miembros" onclick="cambiarTabDirectorio('miembros')" style="padding:10px 20px;font-size:13px;cursor:pointer;background:none;border:none;border-bottom:2px solid var(--text);font-weight:600;color:var(--text);">Personas</button>
                         <button id="tab-familias" onclick="cambiarTabDirectorio('familias')" style="padding:10px 20px;font-size:13px;cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);">Familias</button>
                     </div>
 
                     <!-- TAB MIEMBROS -->
                     <div id="contenido-tab-miembros">
-                        <div id="form-nuevo-miembro" class="form-card hidden">
-                            <h3 id="form-miembro-titulo" class="form-title">Registrar Nuevo Miembro</h3>
+                        <div id="form-nuevo-miembro" class="editor-persona-modal hidden">
+                            <div class="editor-persona-panel">
+                            <div class="editor-persona-header">
+                                <div><h3 id="form-miembro-titulo">Registrar Nueva Persona</h3><p>Identidad, membresía y acceso en un solo lugar</p></div>
+                                <button type="button" onclick="cerrarFormMiembro()" aria-label="Cerrar">✕</button>
+                            </div>
                             <form class="admin-form" onsubmit="registrarMiembro(event)">
                                 <input id="miembro-id" type="hidden">
+                                <input id="persona-id-edicion" type="hidden">
+                                <section class="editor-persona-seccion">
+                                <h4>Datos personales</h4>
                                 <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Tipo de vínculo *</label>
+                                        <select id="persona-tipo-vinculo" onchange="toggleCamposMembresia(this.value)">
+                                            <option value="invitado">Invitado</option>
+                                            <option value="miembro">Miembro</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group"><label>Estado</label><select id="miembro-activo"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
                                     <div class="form-group"><label>Nombre Completo *</label><input id="miembro-nombre" type="text" required></div>
-                                    <div class="form-group"><label>RUT</label><input id="miembro-rut" type="text" placeholder="12.345.678-9"></div>
+                                    <div class="form-group"><label>RUT *</label><input id="miembro-rut" type="text" inputmode="text" maxlength="12" placeholder="12.345.678-9" required></div>
                                     <div class="form-group"><label>Correo</label><input id="miembro-correo" type="email"></div>
                                     <div class="form-group"><label>Teléfono</label><input id="miembro-telefono" type="tel"></div>
-                                    <div class="form-group span-2"><label>Dirección</label><input id="miembro-direccion" type="text"></div>
-                                    <div class="form-group"><label>Fecha Bautismo</label><input id="miembro-fecha-bautismo" type="date"></div>
-                                    <div class="form-group"><label>Fecha de Ingreso</label><input id="miembro-fecha-ingreso" type="date"></div>
-                                    <div class="form-group"><label>Área de Servicio</label><select id="miembro-area"><option>Alabanza y Adoración</option><option>Ujieres / Bienvenida</option><option>Niños</option><option>Multimedia / Audio</option><option>Administración</option><option>Sin asignar</option></select></div>
-                                    <div class="form-group"><label>Estado</label><select id="miembro-activo"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+                                    <div id="campos-membresia" class="campos-membresia hidden">
+                                        <div class="form-group"><label>Fecha Bautismo</label><input id="miembro-fecha-bautismo" type="date"></div>
+                                        <div class="form-group"><label>Fecha de Ingreso</label><input id="miembro-fecha-ingreso" type="date"></div>
+                                    </div>
                                 </div>
-                                <div class="form-actions"><button id="btn-guardar-miembro" type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="cerrarFormMiembro()">Cancelar</button></div>
+                                </section>
+                                <div id="configuracion-miembro" class="hidden">
+                                    <section class="editor-persona-seccion">
+                                        <h4>Roles</h4>
+                                        <div id="editor-roles-lista" class="editor-roles-grid">
+                                            <label><input type="checkbox" value="pastor"> Pastor</label>
+                                            <label><input type="checkbox" value="tesorero"> Tesorero</label>
+                                            <label><input type="checkbox" value="oficial"> Oficial</label>
+                                            <label><input type="checkbox" value="editor_contenido"> Editor</label>
+                                            <label><input type="checkbox" value="lider"> Líder</label>
+                                            <label><input type="checkbox" value="voluntario"> Voluntario</label>
+                                        </div>
+                                    </section>
+                                    <section class="editor-persona-seccion">
+                                        <h4>Cuenta de acceso</h4>
+                                        <div id="editor-cuenta-estado" class="editor-cuenta-estado">
+                                            <label class="editor-cuenta-check"><input id="crear-cuenta-acceso" type="checkbox"> Crear cuenta de usuario al guardar</label>
+                                            <p>Usuario: correo personal · clave temporal válida por 72 horas.</p>
+                                        </div>
+                                    </section>
+                                </div>
+                                <div class="form-actions editor-persona-actions"><button id="btn-guardar-miembro" type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="cerrarFormMiembro()">Cancelar</button></div>
                             </form>
+                            </div>
                         </div>
                         <div class="table-card">
-                            <div class="table-header"><input id="buscar-miembro" type="search" placeholder="Buscar miembro..." class="search-input"><span class="table-count">0 miembros</span></div>
+                            <div class="table-header"><input id="buscar-miembro" type="search" placeholder="Buscar persona..." class="search-input"><span class="table-count">0 personas</span></div>
                             <table class="data-table miembros-table">
-                                <thead><tr><th>Nombre</th><th>Área</th><th>Estado</th><th>Ingreso</th><th></th></tr></thead>
+                                <thead><tr><th>Nombre</th><th>Vínculo</th><th>Estado</th><th>Desde</th><th></th></tr></thead>
                                 <tbody>
                                     <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px;">Cargando...</td></tr>
                                 </tbody>
@@ -676,7 +705,7 @@
                     <div id="contenido-tab-familias" class="hidden">
                         <div class="familias-toolbar" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                             <span style="font-size:14px;color:var(--muted);" id="familias-contador"></span>
-                            <button class="btn-action" onclick="toggleForm('form-nueva-familia')">+ Nueva Familia</button>
+                            <button id="btn-nueva-familia" class="btn-action" onclick="toggleForm('form-nueva-familia')">+ Nueva Familia</button>
                         </div>
                         <div id="form-nueva-familia" class="form-card hidden">
                             <h3 class="form-title">Crear Nueva Familia</h3>
@@ -976,13 +1005,27 @@
                 </section>
                 <section id="vista-perfil-miembro" class="view-section hidden">
                     <div class="page-header"><h1>Mi Perfil</h1><p>Tu información personal y de membresía</p></div>
-                    <div class="perfil-layout">
-                        <div class="perfil-card"><div class="perfil-avatar">DO</div><h2 class="perfil-nombre">David Ormeño</h2><span class="badge active" style="display:block;width:fit-content;margin:8px auto;">Miembro Activo</span>
-                            <div class="perfil-datos"><div class="pd-item"><span class="pd-label">Correo</span><span>david.ormeno@email.com</span></div><div class="pd-item"><span class="pd-label">Teléfono</span><span>+56 9 8765 1234</span></div><div class="pd-item"><span class="pd-label">Área</span><span>Alabanza y Adoración</span></div><div class="pd-item"><span class="pd-label">Miembro desde</span><span>Enero 2023</span></div><div class="pd-item"><span class="pd-label">Bautismo</span><span>15 Marzo 2023</span></div></div>
+                    <div class="mi-perfil-contenido">
+                        <div class="perfil-card perfil-card-horizontal">
+                            <div id="mi-perfil-avatar" class="perfil-avatar">—</div>
+                            <div class="perfil-identidad">
+                                <h2 id="mi-perfil-nombre" class="perfil-nombre">Cargando...</h2>
+                                <span id="mi-perfil-estado" class="badge active">Miembro</span>
+                            </div>
+                            <div class="perfil-datos">
+                                <div class="pd-item"><span class="pd-label">Correo</span><span id="mi-perfil-correo">—</span></div>
+                                <div class="pd-item"><span class="pd-label">Teléfono</span><span id="mi-perfil-telefono">—</span></div>
+                                <div class="pd-item"><span class="pd-label">Familia</span><span id="mi-perfil-familia">—</span></div>
+                                <div class="pd-item"><span class="pd-label">Roles</span><span id="mi-perfil-roles">—</span></div>
+                                <div class="pd-item"><span class="pd-label">Miembro desde</span><span id="mi-perfil-ingreso">—</span></div>
+                                <div class="pd-item"><span class="pd-label">Bautismo</span><span id="mi-perfil-bautismo">—</span></div>
+                            </div>
                         </div>
-                        <div class="perfil-side">
-                            <div class="dash-widget"><h3 class="widget-title">Próximo Servicio</h3><div class="servicio-row" style="border:none;padding:0;"><div class="servicio-fecha"><span class="sf-dia">DOM</span><span class="sf-num">15</span></div><div class="servicio-det"><strong>Servicio General</strong><span>11:00 hrs · Alabanza</span></div></div></div>
-                            <div class="dash-widget" style="margin-top:20px;"><h3 class="widget-title">Resumen de Aportes</h3><div class="ar-item"><span class="ar-label">Este mes</span><span class="ar-monto">$35.000</span></div><div class="ar-item"><span class="ar-label">Acumulado 2025</span><span class="ar-monto">$210.000</span></div></div>
+                        <div class="mi-panel-grid">
+                            <section class="mi-panel-card">
+                                <div class="mi-panel-heading"><div><span>AGENDA PERSONAL</span><h3>Próximas actividades</h3></div></div>
+                                <div id="mi-perfil-actividades" class="mi-actividades-lista"><p class="mi-panel-vacio">Cargando actividades...</p></div>
+                            </section>
                         </div>
                     </div>
                 </section>
@@ -994,9 +1037,24 @@
                     </div>
                 </section>
                 <section id="vista-mis-aportes" class="view-section hidden">
-                    <div class="page-header"><h1>Mis Aportes</h1><p>Tu historial privado de contribuciones</p></div>
-                    <div class="aportes-bar"><div class="apres-item"><span class="apres-label">Total 2025</span><span class="apres-num">$210.000</span></div><div class="apres-item"><span class="apres-label">Último aporte</span><span class="apres-num">08/06/2025</span></div><div class="apres-item"><span class="apres-label">Tipo principal</span><span class="apres-num">Diezmo</span></div></div>
-                    <div class="table-card"><table class="data-table"><thead><tr><th>Tipo</th><th>Monto</th><th>Fecha</th><th>Servicio</th></tr></thead><tbody><tr><td>Diezmo</td><td class="monto-cell">$35.000</td><td>08/06/2025</td><td>Dom 8 Jun</td></tr><tr><td>Diezmo</td><td class="monto-cell">$35.000</td><td>25/05/2025</td><td>Dom 25 May</td></tr><tr><td>Ofrenda</td><td class="monto-cell">$10.000</td><td>11/05/2025</td><td>Dom 11 May</td></tr></tbody></table></div>
+                    <div class="page-header"><h1>Mis Aportes</h1><p>Información personal y transparencia del mes</p></div>
+                    <div class="mis-aportes-grid">
+                        <section class="aporte-personal-card">
+                            <span id="aporte-personal-periodo" class="aporte-eyebrow">APORTE DEL MES</span>
+                            <h2 id="aporte-personal-monto">—</h2>
+                            <strong id="aporte-personal-tipo">Cargando...</strong>
+                            <p id="aporte-personal-fecha">—</p>
+                            <small>Esta vista no muestra acumulados ni historial personal.</small>
+                        </section>
+                        <section class="transparencia-card">
+                            <div class="transparencia-heading">
+                                <div><span>TRANSPARENCIA MENSUAL</span><h3 id="transparencia-periodo">Resumen del mes</h3></div>
+                                <div class="transparencia-ingresos"><span>Total de ingresos</span><strong id="transparencia-total-ingresos">—</strong></div>
+                            </div>
+                            <div id="transparencia-categorias" class="transparencia-categorias"><p class="mi-panel-vacio">Cargando egresos...</p></div>
+                            <div class="transparencia-total"><span>Total de egresos</span><strong id="transparencia-total-egresos">—</strong></div>
+                        </section>
+                    </div>
                 </section>
             </main>
         </div>
@@ -1009,6 +1067,47 @@
             <button onclick="document.getElementById('modal-detalle').classList.add('hidden')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
         </div>
         <div id="modal-detalle-contenido"></div>
+    </div>
+</div>
+<!-- La clave temporal se muestra una sola vez al administrador -->
+<div id="modal-credencial-temporal" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="credencial-temporal-titulo">
+    <div class="modal-agenda-panel modal-credencial-panel">
+        <div class="modal-agenda-header">
+            <div>
+                <h3 id="credencial-temporal-titulo">Acceso creado</h3>
+                <p>Envía estas credenciales de forma privada.</p>
+            </div>
+            <button type="button" onclick="cerrarCredencialTemporal()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="credencial-temporal">
+            <div><span>Usuario</span><strong id="credencial-temporal-correo"></strong></div>
+            <div><span>Contraseña temporal</span><code id="credencial-temporal-password"></code></div>
+            <p>Vence en 72 horas y deberá cambiarse obligatoriamente en el primer ingreso. Esta clave no podrá consultarse nuevamente.</p>
+        </div>
+        <div class="modal-agenda-actions">
+            <button type="button" class="btn-cancel" onclick="copiarCredencialTemporal()">Copiar instrucciones</button>
+            <button type="button" class="btn-action" onclick="cerrarCredencialTemporal()">Entendido</button>
+        </div>
+    </div>
+</div>
+
+<!-- Cambio obligatorio de contraseña en el primer ingreso -->
+<div id="modal-cambio-password-inicial" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="cambio-password-titulo">
+    <div class="modal-agenda-panel modal-password-panel">
+        <div class="modal-agenda-header">
+            <div>
+                <h3 id="cambio-password-titulo">Crea tu contraseña</h3>
+                <p>La clave temporal solo permite completar este paso.</p>
+            </div>
+        </div>
+        <form id="form-cambio-password-inicial" class="admin-form">
+            <div class="form-group"><label>Nueva contraseña</label><input id="password-inicial-nueva" type="password" autocomplete="new-password" required></div>
+            <div class="form-group"><label>Repetir contraseña</label><input id="password-inicial-confirmar" type="password" autocomplete="new-password" required></div>
+            <p class="password-regla">Mínimo 10 caracteres, con mayúscula, minúscula y número.</p>
+            <div class="modal-agenda-actions">
+                <button id="btn-cambiar-password-inicial" type="submit" class="btn-action">Crear contraseña e ingresar</button>
+            </div>
+        </form>
     </div>
 </div>
 <!-- Modal confirmación fecha futura -->

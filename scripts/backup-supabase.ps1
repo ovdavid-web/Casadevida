@@ -19,11 +19,12 @@ $backupError = $null
 
 try {
     $env:PGPASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($passwordPointer)
+    $env:PGSSLMODE = 'require'
 
     $connectionArgs = @(
-        '--host=db.pwcsztjpmlhmidwahzlz.supabase.co'
+        '--host=aws-1-sa-east-1.pooler.supabase.com'
         '--port=5432'
-        '--username=postgres'
+        '--username=postgres.pwcsztjpmlhmidwahzlz'
         '--dbname=postgres'
         '--schema=public'
     )
@@ -78,6 +79,7 @@ catch {
 }
 finally {
     Remove-Item Env:PGPASSWORD -ErrorAction SilentlyContinue
+    Remove-Item Env:PGSSLMODE -ErrorAction SilentlyContinue
     if ($passwordPointer -ne [IntPtr]::Zero) {
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
     }

@@ -56,6 +56,7 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
             rut,
             correo,
             telefono,
+            fecha_nacimiento,
             fecha_bautismo,
             direccion,
             fecha_ingreso,
@@ -66,6 +67,10 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
 
         if (!esRutValido(rut)) {
             return res.status(400).json({ error: 'Ingresa un RUT chileno válido' });
+        }
+
+        if (fecha_nacimiento && fecha_nacimiento > new Date().toISOString().split('T')[0]) {
+            return res.status(400).json({ error: 'La fecha de nacimiento no puede ser futura' });
         }
 
         const { data, error } = await supabase.rpc('crear_miembro_con_persona', {
@@ -91,6 +96,13 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
         }
 
         const miembro = Array.isArray(data) ? data[0] : data;
+        if (miembro?.persona_id) {
+            const { error: errorNacimiento } = await supabase
+                .from('personas')
+                .update({ fecha_nacimiento: fecha_nacimiento || null, actualizado_en: new Date().toISOString() })
+                .eq('id', miembro.persona_id);
+            if (errorNacimiento) throw errorNacimiento;
+        }
         res.status(201).json({ mensaje: 'Miembro registrado correctamente', miembro });
     } catch (err) {
         console.error('Error registrando miembro:', err);
@@ -106,6 +118,7 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             rut,
             correo,
             telefono,
+            fecha_nacimiento,
             fecha_bautismo,
             direccion,
             fecha_ingreso,
@@ -118,6 +131,9 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
         }
         if (!esRutValido(rut)) {
             return res.status(400).json({ error: 'Ingresa un RUT chileno válido' });
+        }
+        if (fecha_nacimiento && fecha_nacimiento > new Date().toISOString().split('T')[0]) {
+            return res.status(400).json({ error: 'La fecha de nacimiento no puede ser futura' });
         }
         if (activo === false && !motivo_inactividad?.trim()) {
             return res.status(400).json({ error: 'Indica el motivo de inactividad' });
@@ -175,6 +191,12 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             .update({ activo: activo !== false })
             .eq('persona_id', miembroActual.persona_id);
         if (errorCuenta) throw errorCuenta;
+
+        const { error: errorNacimiento } = await supabase
+            .from('personas')
+            .update({ fecha_nacimiento: fecha_nacimiento || null, actualizado_en: new Date().toISOString() })
+            .eq('id', miembroActual.persona_id);
+        if (errorNacimiento) throw errorNacimiento;
 
         if (activo === false && vinculoActual?.id) {
             const motivo = motivo_inactividad.trim().slice(0, 160);

@@ -49,6 +49,7 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
                 correo,
                 telefono,
                 direccion,
+                fecha_nacimiento,
                 estado,
                 vinculos_iglesia (
                     id,
@@ -106,6 +107,7 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
                 correo: persona.correo,
                 telefono: persona.telefono,
                 direccion: persona.direccion,
+                fecha_nacimiento: persona.fecha_nacimiento,
                 estado: vinculo?.estado || persona.estado,
                 tipo_vinculo: vinculo?.tipo || 'sin vínculo',
                 fecha_inicio: vinculo?.fecha_inicio || null,
@@ -163,6 +165,7 @@ router.get('/mi-perfil', verificarToken, async (req, res) => {
                 apellidos,
                 correo,
                 telefono,
+                fecha_nacimiento,
                 estado,
                 miembros (
                     id,
@@ -235,6 +238,7 @@ router.get('/mi-perfil', verificarToken, async (req, res) => {
                 nombre: [persona.nombres, persona.apellidos].filter(Boolean).join(' ').trim(),
                 correo: persona.correo || usuario.correo,
                 telefono: persona.telefono,
+                fecha_nacimiento: persona.fecha_nacimiento,
                 estado: persona.estado,
                 tipo_vinculo: miembro ? 'miembro' : 'invitado',
                 miembro: miembro ? {
@@ -365,6 +369,7 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
             correo,
             telefono,
             direccion,
+            fecha_nacimiento,
             fecha_bautismo,
             fecha_ingreso,
             activo
@@ -378,6 +383,9 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
         }
         if (!esRutValido(rut)) {
             return res.status(400).json({ error: 'Ingresa un RUT chileno válido' });
+        }
+        if (fecha_nacimiento && fecha_nacimiento > new Date().toISOString().split('T')[0]) {
+            return res.status(400).json({ error: 'La fecha de nacimiento no puede ser futura' });
         }
 
         const esMiembro = tipo_vinculo === 'miembro';
@@ -417,6 +425,14 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
         }
 
         const registro = Array.isArray(data) ? data[0] : data;
+        const personaId = esMiembro ? registro?.persona_id : registro?.id;
+        if (personaId) {
+            const { error: errorNacimiento } = await supabase
+                .from('personas')
+                .update({ fecha_nacimiento: fecha_nacimiento || null, actualizado_en: new Date().toISOString() })
+                .eq('id', personaId);
+            if (errorNacimiento) throw errorNacimiento;
+        }
         res.status(201).json({
             mensaje: esMiembro ? 'Miembro registrado correctamente' : 'Invitado registrado correctamente',
             tipo_vinculo,

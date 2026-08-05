@@ -509,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(rol => `<span>${sanitizar(rol.nombre)}</span>`)
                     .join('')}</span>`
                 : 'Sin roles asignados';
-            $('mi-perfil-ingreso').textContent = formatearFechaPerfil(perfil.miembro?.fecha_ingreso);
+            $('mi-perfil-nacimiento').textContent = formatearFechaPerfil(perfil.fecha_nacimiento);
             $('mi-perfil-bautismo').textContent = formatearFechaPerfil(perfil.miembro?.fecha_bautismo);
             $('mi-perfil-estado').textContent = perfil.tipo_vinculo === 'miembro'
                 ? `Miembro ${activo ? 'Activo' : 'Inactivo'}`
@@ -1246,6 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">TELÉFONO</div><div style="font-weight:600;font-size:14px;">${dato(persona.telefono)}</div></div>
                     </div>
                     <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">CORREO</div><div style="font-weight:600;font-size:14px;">${dato(persona.correo)}</div></div>
+                    ${!esMiembro ? `<div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE NACIMIENTO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.fecha_nacimiento)}</div></div>` : ''}
                     ${esMiembro ? `
                         <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FAMILIA</div><div style="font-weight:600;font-size:14px;">${familia ? dato(familia.nombre) : 'Sin grupo familiar'}</div></div>
                         <div style="background:var(--paper);border-radius:10px;padding:14px;">
@@ -1272,8 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         ${!estaActivo && persona.motivo_inactividad ? `<div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">MOTIVO DE INACTIVIDAD</div><div style="font-weight:600;font-size:14px;">${dato(persona.motivo_inactividad)}</div></div>` : ''}
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE NACIMIENTO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.fecha_nacimiento)}</div></div>
                             <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE BAUTISMO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_bautismo)}</div></div>
-                            <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE INGRESO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_ingreso)}</div></div>
                         </div>
                         ${tieneDirectorioLimitado() ? '' : `<button type="button" class="btn-action" style="width:100%;margin-top:4px;" onclick="editarMiembro('${persona.miembro.id}')">Editar persona</button>`}
                     ` : `
@@ -1374,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             $('miembro-correo').value = m.correo || '';
             $('miembro-telefono').value = m.telefono || '';
             $('miembro-fecha-bautismo').value = m.fecha_bautismo || '';
-            $('miembro-fecha-ingreso').value = m.fecha_ingreso || '';
+            $('persona-fecha-nacimiento').value = persona.fecha_nacimiento || '';
             $('miembro-activo').value = String(Boolean(m.activo));
             const motivoGuardado = persona.motivo_inactividad === 'Miembro desactivado administrativamente'
                 ? ''
@@ -1419,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', () => {
             correo:         $('miembro-correo').value.trim() || null,
             telefono:       $('miembro-telefono').value.trim() || null,
             fecha_bautismo: tipoVinculo === 'miembro' ? ($('miembro-fecha-bautismo').value || null) : null,
-            fecha_ingreso:  tipoVinculo === 'miembro' ? ($('miembro-fecha-ingreso').value || null) : null,
+            fecha_nacimiento: $('persona-fecha-nacimiento').value || null,
             activo:         $('miembro-activo').value === 'true'
         };
         if (!payload.activo) {
@@ -2379,6 +2380,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // INIT
     // ============================================================
     const hoyChile = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' })).toISOString().split('T')[0];
-    document.querySelectorAll('input[type="date"]').forEach(el => { if (!el.value) el.value = hoyChile; });
+    document.querySelectorAll('input[type="date"]').forEach(el => {
+        if (el.id === 'persona-fecha-nacimiento') {
+            el.max = hoyChile;
+            return;
+        }
+        if (!el.value) el.value = hoyChile;
+    });
 
 });

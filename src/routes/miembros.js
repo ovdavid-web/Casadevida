@@ -59,8 +59,7 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
             fecha_bautismo,
             direccion,
             fecha_ingreso,
-            activo,
-            motivo_inactividad
+            activo
         } = req.body;
 
         if (!nombre) return res.status(400).json({ error: 'El nombre es requerido' });
@@ -110,7 +109,8 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             fecha_bautismo,
             direccion,
             fecha_ingreso,
-            activo
+            activo,
+            motivo_inactividad
         } = req.body;
 
         if (!nombre?.trim()) {
@@ -137,7 +137,8 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             .select('id')
             .eq('persona_id', miembroActual.persona_id)
             .eq('tipo', 'miembro')
-            .order('fecha_inicio', { ascending: false })
+            .eq('estado', 'activo')
+            .order('creado_en', { ascending: false })
             .limit(1)
             .maybeSingle();
 
@@ -179,7 +180,7 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
             const motivo = motivo_inactividad.trim().slice(0, 160);
             const { error: errorMotivo } = await supabase
                 .from('vinculos_iglesia')
-                .update({ motivo_fin: motivo })
+                .update({ motivo_fin: motivo, actualizado_en: new Date().toISOString() })
                 .eq('id', vinculoActual.id);
             if (errorMotivo) throw errorMotivo;
 

@@ -56,7 +56,9 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
                     estado,
                     fecha_inicio,
                     fecha_fin,
-                    motivo_fin
+                    motivo_fin,
+                    creado_en,
+                    actualizado_en
                 ),
                 miembros (
                     id,
@@ -89,7 +91,7 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
         const personas = (data || []).map(persona => {
             const vinculos = persona.vinculos_iglesia || [];
             const vinculo = vinculos.find(item => item.estado === 'activo')
-                || [...vinculos].sort((a, b) => String(b.fecha_inicio).localeCompare(String(a.fecha_inicio)))[0]
+                || [...vinculos].sort((a, b) => String(b.creado_en).localeCompare(String(a.creado_en)))[0]
                 || null;
             const miembro = (persona.miembros || [])[0] || null;
             const cuenta = Array.isArray(persona.usuarios)

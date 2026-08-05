@@ -52,7 +52,14 @@ const verificarToken = async (req, res, next) => {
             .select('id, correo, rol, activo, persona_id, password_actualizado_en')
             .eq('id', decoded.id)
             .single();
-        if (error || !usuario || !usuario.activo) {
+        if (error) {
+            console.error('Error verificando la sesión en Supabase:', error);
+            return res.status(503).json({
+                codigo: 'SESSION_CHECK_FAILED',
+                error: 'No fue posible verificar la sesión. Intenta nuevamente.'
+            });
+        }
+        if (!usuario || !usuario.activo) {
             return res.status(401).json({
                 codigo: 'SESSION_REVOKED',
                 error: 'Tu cuenta está desactivada. Contacta al administrador.'

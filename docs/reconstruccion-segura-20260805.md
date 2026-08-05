@@ -28,8 +28,23 @@ Cada bloque se guardó en un commit independiente después de sus comprobaciones
 - Acceso de `admin@casadevida.cl`: HTTP 200, rol `superadmin`, cambio de contraseña obligatorio.
 - Acceso de `orme.guz@gmail.com`: HTTP 200, rol efectivo `voluntario`, cambio de contraseña obligatorio.
 - La interfaz oficial contiene el formulario y utiliza `/api/auth/login` del mismo servidor.
+- El acceso administrativo fue confirmado manualmente desde la interfaz oficial.
+- Matriz de lectura por rol: 28 combinaciones correctas de 28, sin fallos.
 
 Las pruebas nunca imprimieron hashes ni incorporaron secretos a Git.
+
+## Causa confirmada del incidente local
+
+Un proceso Node antiguo, iniciado antes de la reconstrucción, seguía ocupando el puerto `3000`. El navegador se conectaba a ese proceso con configuración obsoleta, mientras cada intento de iniciar la versión reconstruida terminaba al no poder conservar el puerto. El proceso antiguo fue identificado por PID, validado como Node y detenido de forma puntual. Después de liberar el puerto, la reconstrucción inició normalmente y el acceso admin funcionó.
+
+## Auditoría viva de cuentas y permisos
+
+- `admin@casadevida.cl`: activo, `superadmin`, contraseña personal actualizada el 5 de agosto.
+- `oficial.prueba@casadevida.test`: activo, rol efectivo `oficial`.
+- `orme.guz@gmail.com`: activo, rol efectivo `voluntario`, credencial temporal pendiente.
+- `tesorero.prueba@casadevida.test`: activo, rol efectivo `tesorero`, credencial temporal vencida.
+
+La matriz comprobó accesos de solo lectura a personas, finanzas, servicios, cuentas por pagar, egresos, perfil personal y resumen personal. Los permisos y denegaciones coincidieron con la política esperada en los 28 casos.
 
 ## Corrección preventiva de configuración
 

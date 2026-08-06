@@ -678,10 +678,18 @@ document.addEventListener('DOMContentLoaded', () => {
         $('form-nueva-acta').scrollIntoView({ behavior:'smooth', block:'start' });
     };
 
-    window.cerrarActaActual = async () => {
-        if (!actaActual || !window.confirm('¿Confirmar y proteger esta acta? Después requerirá una reapertura auditada para editarla.')) return;
-        try { const data = await apiFetch(`/api/secretaria/actas/${actaActual.id}/cerrar`, { method:'PATCH' }); toast(data.mensaje,'success'); window.cerrarLectorActa(); await cargarSecretaria(); }
+    window.cerrarActaActual = () => {
+        if (!actaActual) return;
+        show($('modal-confirmar-acta'));
+    };
+    window.cerrarConfirmacionActa = () => hide($('modal-confirmar-acta'));
+    window.confirmarActaActual = async () => {
+        if (!actaActual) return;
+        const boton = $('btn-confirmar-acta-final');
+        boton.disabled = true;
+        try { const data = await apiFetch(`/api/secretaria/actas/${actaActual.id}/cerrar`, { method:'PATCH' }); toast(data.mensaje,'success'); window.cerrarConfirmacionActa(); window.cerrarLectorActa(); await cargarSecretaria(); }
         catch (err) { toast(err.message,'error'); }
+        finally { boton.disabled = false; }
     };
 
     window.abrirReaperturaActa = () => { $('motivo-reapertura-acta').value=''; show($('modal-reabrir-acta')); };

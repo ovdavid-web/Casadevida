@@ -1238,6 +1238,14 @@
 <div id="modal-reabrir-acta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="reabrir-acta-titulo">
     <div class="modal-agenda-panel"><div class="modal-agenda-header"><div><h3 id="reabrir-acta-titulo">Reabrir acta cerrada</h3><p>La reapertura quedará registrada en auditoría.</p></div><button type="button" onclick="cerrarReaperturaActa()">✕</button></div><div class="form-group"><label for="motivo-reapertura-acta">Motivo *</label><textarea id="motivo-reapertura-acta" rows="4" maxlength="500"></textarea></div><div class="modal-agenda-actions"><button class="btn-cancel" type="button" onclick="cerrarReaperturaActa()">Cancelar</button><button id="btn-confirmar-reapertura" class="btn-action" type="button" onclick="confirmarReaperturaActa()">Reabrir como borrador</button></div></div>
 </div>
+<div id="modal-confirmar-acta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="confirmar-acta-titulo">
+    <div class="modal-agenda-panel modal-confirmacion-panel">
+        <div class="modal-confirmacion-icono">✓</div>
+        <h3 id="confirmar-acta-titulo">Confirmar acta</h3>
+        <p>El acta quedará finalizada y protegida para conservar su contenido. Si necesitas corregirla después, podrás reabrirla indicando el motivo.</p>
+        <div class="modal-agenda-actions"><button class="btn-cancel" type="button" onclick="cerrarConfirmacionActa()">Cancelar</button><button id="btn-confirmar-acta-final" class="btn-action" type="button" onclick="confirmarActaActual()">Confirmar acta</button></div>
+    </div>
+</div>
 <!-- Modal finalización de cuenta recurrente -->
 <div id="modal-finalizar-cuenta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="modal-finalizar-cuenta-titulo">
     <div class="modal-agenda-panel">

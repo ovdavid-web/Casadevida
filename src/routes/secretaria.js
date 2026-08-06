@@ -186,7 +186,7 @@ router.get('/estructura', verificarToken, verificarRol('pastor', 'secretaria'), 
 
         const { data: responsables, error: errorResponsables } = await supabase
             .from('departamento_lideres')
-            .select('id, departamento_id, persona_id, cargo, orden, fecha_inicio, fecha_fin, activo, personas(nombres, apellidos, estado)')
+            .select('id, departamento_id, persona_id, cargo, orden, fecha_inicio, fecha_fin, estado, personas(nombres, apellidos, estado)')
             .order('orden', { ascending: true })
             .order('fecha_inicio', { ascending: false });
         if (errorResponsables) throw errorResponsables;

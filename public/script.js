@@ -624,7 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const responsablesPorArea = responsables.reduce((indice, item) => {
-                if (!item.activo) return indice;
+                if (item.estado !== 'activo') return indice;
                 (indice[item.departamento_id] ||= []).push(item);
                 return indice;
             }, {});

@@ -122,6 +122,71 @@ router.post('/', verificarToken, accesoFinanciero, async (req, res) => {
     }
 });
 
+router.put('/:id', verificarToken, accesoFinanciero, async (req, res) => {
+    try {
+        const { data: antes, error: errorAntes } = await supabase.from('cuentas_por_pagar').select('*').eq('id', req.params.id).single();
+        if (errorAntes || !antes) return res.status(404).json({ error: 'Cuenta no encontrada' });
+        if (antes.estado !== 'pendiente' || antes.egreso_id) return res.status(400).json({ error: 'Solo se puede editar una cuenta pendiente y sin egreso' });
+
+        const nombre = String(req.body.nombre || '').trim();
+        const moneda = req.body.moneda || 'CLP';
+        const frecuencia = req.body.frecuencia || 'unica';
+        const montoReferencia = req.body.monto_referencia === null || req.body.monto_referencia === '' ? null : Number(req.body.monto_referencia);
+        if (nombre.length < 2 || nombre.length > 150) return res.status(400).json({ error: 'Ingresa un nombre válido para la cuenta' });
+        if (!CATEGORIAS.includes(req.body.categoria)) return res.status(400).json({ error: 'Categoría no válida' });
+        if (!FRECUENCIAS.includes(frecuencia)) return res.status(400).json({ error: 'Frecuencia no válida' });
+        if (!['CLP', 'USD'].includes(moneda)) return res.status(400).json({ error: 'Moneda no válida' });
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(req.body.fecha_vencimiento || '')) return res.status(400).json({ error: 'Vencimiento no válido' });
+        if (montoReferencia !== null && (!Number.isFinite(montoReferencia) || montoReferencia <= 0)) return res.status(400).json({ error: 'Monto estimado no válido' });
+
+        const cambios = {
+            nombre,
+            proveedor: String(req.body.proveedor || '').trim() || null,
+            categoria: req.body.categoria,
+            monto: moneda === 'CLP' ? montoReferencia : null,
+            monto_moneda_origen: moneda === 'USD' ? montoReferencia : null,
+            moneda,
+            fecha_vencimiento: req.body.fecha_vencimiento,
+            frecuencia,
+            observaciones: String(req.body.observaciones || '').trim() || null,
+            fecha_inicio_servicio: req.body.fecha_inicio_servicio || null,
+            fecha_revision: req.body.fecha_revision || null,
+            aviso_revision_dias: Number(req.body.aviso_revision_dias || 30),
+            nota_revision: String(req.body.nota_revision || '').trim() || null
+        };
+        const { data, error } = await supabase.from('cuentas_por_pagar').update(cambios).eq('id', req.params.id).eq('estado', 'pendiente').select().single();
+        if (error) throw error;
+        await supabase.from('auditoria').insert({ usuario_id: req.usuario.id, accion: 'MODIFICAR', tabla: 'cuentas_por_pagar', registro_id: data.id, datos_antes: antes, datos_despues: data });
+        res.json({ mensaje: 'Cuenta pendiente actualizada', cuenta: data });
+    } catch (err) {
+        console.error('Error actualizando cuenta por pagar:', err);
+        res.status(500).json({ error: 'No fue posible actualizar la cuenta' });
+    }
+});
+
+router.patch('/:id/finalizar', verificarToken, accesoFinanciero, async (req, res) => {
+    try {
+        const motivo = String(req.body.motivo || '').trim();
+        if (motivo.length < 5 || motivo.length > 500) return res.status(400).json({ error: 'Indica brevemente el motivo de finalización' });
+        const { data: antes, error: errorAntes } = await supabase.from('cuentas_por_pagar').select('*').eq('id', req.params.id).single();
+        if (errorAntes || !antes) return res.status(404).json({ error: 'Cuenta no encontrada' });
+        if (antes.estado !== 'pendiente' || antes.egreso_id) return res.status(400).json({ error: 'Solo se puede finalizar una cuenta pendiente' });
+
+        const { data, error } = await supabase.from('cuentas_por_pagar').update({
+            estado: 'anulada',
+            fecha_anulacion: new Date().toISOString(),
+            motivo_anulacion: motivo,
+            anulada_por: req.usuario.id
+        }).eq('id', req.params.id).eq('estado', 'pendiente').select().single();
+        if (error) throw error;
+        await supabase.from('auditoria').insert({ usuario_id: req.usuario.id, accion: 'FINALIZAR_RECURRENCIA', tabla: 'cuentas_por_pagar', registro_id: data.id, datos_antes: antes, datos_despues: data });
+        res.json({ mensaje: 'Recurrencia finalizada; el historial se conservó', cuenta: data });
+    } catch (err) {
+        console.error('Error finalizando cuenta recurrente:', err);
+        res.status(500).json({ error: 'No fue posible finalizar la recurrencia' });
+    }
+});
+
 router.patch('/:id/pagar', verificarToken, accesoFinanciero, async (req, res) => {
     try {
         const { id } = req.params;

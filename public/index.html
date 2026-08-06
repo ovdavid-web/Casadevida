@@ -528,9 +528,10 @@
                     <div id="panel-cuentas-pagar" class="table-card cuentas-panel">
                         <div class="cuentas-panel-header">
                             <div><h3>Cuentas por pagar</h3><span id="cuentas-pagar-contador">Sin cuentas pendientes</span></div>
-                            <button id="btn-nueva-cuenta" class="btn-table" type="button" onclick="toggleFormCuentaPagar()">+ Nueva cuenta</button>
+                            <button id="btn-nueva-cuenta" class="btn-table" type="button" onclick="abrirNuevaCuentaPagar()">+ Nueva cuenta</button>
                         </div>
                         <form id="form-cuenta-pagar" class="cuenta-pagar-form hidden" onsubmit="guardarCuentaPagar(event)">
+                            <input id="cuenta-pagar-id" type="hidden">
                             <div class="form-grid cuenta-pagar-grid">
                                 <div class="form-group"><label>Cuenta o servicio *</label><input id="cuenta-pagar-nombre" type="text" maxlength="150" placeholder="Electricidad, Internet..." required></div>
                                 <div class="form-group"><label>Proveedor</label><input id="cuenta-pagar-proveedor" type="text" maxlength="150"></div>
@@ -547,7 +548,7 @@
                             </div>
                             <div class="form-actions">
                                 <button id="btn-guardar-cuenta-pagar" type="submit" class="btn-action">Guardar cuenta</button>
-                                <button type="button" class="btn-cancel" onclick="toggleFormCuentaPagar(false)">Cancelar</button>
+                                <button type="button" class="btn-cancel" onclick="cerrarFormularioCuentaPagar()">Cancelar</button>
                             </div>
                         </form>
                         <div id="cuentas-pagar-lista" class="cuentas-pagar-lista"><p class="agenda-vacia">Cargando cuentas...</p></div>
@@ -1221,6 +1222,15 @@
             <button type="button" class="btn-cancel" onclick="cerrarModalSuspensionEvento()">Cancelar</button>
             <button id="btn-confirmar-suspension" type="button" class="btn-suspender-evento" onclick="confirmarSuspensionEvento()">Suspender evento</button>
         </div>
+    </div>
+</div>
+<!-- Modal finalización de cuenta recurrente -->
+<div id="modal-finalizar-cuenta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="modal-finalizar-cuenta-titulo">
+    <div class="modal-agenda-panel">
+        <div class="modal-agenda-header"><div><h3 id="modal-finalizar-cuenta-titulo">Finalizar recurrencia</h3><p id="modal-finalizar-cuenta-nombre"></p></div><button type="button" onclick="cerrarModalFinalizarCuenta()" aria-label="Cerrar">✕</button></div>
+        <div class="form-group"><label for="modal-finalizar-cuenta-motivo">Motivo *</label><textarea id="modal-finalizar-cuenta-motivo" rows="4" maxlength="500" placeholder="Cambio de proveedor, término anticipado del contrato..."></textarea></div>
+        <p class="modal-agenda-ayuda">Se anulará solo el vencimiento pendiente. Los pagos anteriores permanecerán en el historial.</p>
+        <div class="modal-agenda-actions"><button type="button" class="btn-cancel" onclick="cerrarModalFinalizarCuenta()">Cancelar</button><button id="btn-finalizar-cuenta" type="button" class="btn-suspender-evento" onclick="confirmarFinalizarCuenta()">Finalizar recurrencia</button></div>
     </div>
 </div>
 <!-- Modal confirmación de cuenta pagada -->

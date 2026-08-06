@@ -238,6 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const esOficialConsulta = () => getUsuario().rol === 'oficial';
     const esTesorero = () => getUsuario().rol === 'tesorero';
     const esSecretaria = () => getUsuario().rol === 'secretaria';
+    const puedeGestionarCuentas = () => ['superadmin', 'tesorero'].includes(getUsuario().rol);
     const tieneDirectorioLimitado = () => esOficialConsulta() || esTesorero();
     const puedeEditarDirectorio = () => !esOficialConsulta() && !esTesorero() && !esSecretaria();
     const puedeGestionarEventos = () => ['superadmin', 'pastor', 'secretaria'].includes(getUsuario().rol);
@@ -782,6 +783,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let miniaturaPreviewLocal = null;
     let eventoPendienteSuspension = null;
     let cuentaPendientePago = null;
+    let cuentaPendienteFinalizar = null;
 
     const mostrarPreviewMiniatura = url => {
         const imagen = $('evento-miniatura-preview');
@@ -1012,11 +1014,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         <strong>${cuenta.fecha_vencimiento.split('-').reverse().join('/')}</strong>
                         <span>${estadoFecha}</span>
                     </div>
-                    ${esOficialConsulta() ? '' : `
+                    ${puedeGestionarCuentas() ? `
                         <div class="cuenta-pagar-acciones">
                             <button type="button" class="btn-table" onclick="abrirModalConfirmarPago('${cuenta.id}')">${requiereEgreso ? 'Registrar egreso' : 'Marcar pagada'}</button>
+                            <button type="button" class="btn-table" onclick="editarCuentaPagar('${cuenta.id}')">Editar</button>
+                            <button type="button" class="btn-table cuenta-finalizar" onclick="abrirModalFinalizarCuenta('${cuenta.id}')">Finalizar</button>
                         </div>
-                    `}
+                    ` : ''}
                 </article>`;
         }).join('');
     };
@@ -1035,6 +1039,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.abrirNuevaCuentaPagar = () => {
+        $('form-cuenta-pagar').reset();
+        $('cuenta-pagar-id').value = '';
+        $('btn-guardar-cuenta-pagar').textContent = 'Guardar cuenta';
+        window.actualizarMonedaCuenta();
+        window.toggleFormCuentaPagar(true);
+    };
+
+    window.cerrarFormularioCuentaPagar = () => {
+        $('form-cuenta-pagar').reset();
+        $('cuenta-pagar-id').value = '';
+        $('btn-guardar-cuenta-pagar').textContent = 'Guardar cuenta';
+        window.toggleFormCuentaPagar(false);
+    };
+
+    window.editarCuentaPagar = id => {
+        const cuenta = cuentasPorPagar.find(item => item.id === id);
+        if (!cuenta || cuenta.estado !== 'pendiente') return;
+        $('cuenta-pagar-id').value = cuenta.id;
+        $('cuenta-pagar-nombre').value = cuenta.nombre || '';
+        $('cuenta-pagar-proveedor').value = cuenta.proveedor || '';
+        $('cuenta-pagar-categoria').value = cuenta.categoria;
+        $('cuenta-pagar-moneda').value = cuenta.moneda || 'CLP';
+        $('cuenta-pagar-monto').value = cuenta.moneda === 'USD' ? (cuenta.monto_moneda_origen || '') : (cuenta.monto || '');
+        $('cuenta-pagar-vencimiento').value = cuenta.fecha_vencimiento;
+        $('cuenta-pagar-frecuencia').value = cuenta.frecuencia;
+        $('cuenta-pagar-inicio').value = cuenta.fecha_inicio_servicio || '';
+        $('cuenta-pagar-revision').value = cuenta.fecha_revision || '';
+        $('cuenta-pagar-aviso').value = String(cuenta.aviso_revision_dias || 30);
+        $('cuenta-pagar-nota-revision').value = cuenta.nota_revision || '';
+        $('cuenta-pagar-observaciones').value = cuenta.observaciones || '';
+        $('btn-guardar-cuenta-pagar').textContent = 'Guardar cambios';
+        window.actualizarMonedaCuenta();
+        window.toggleFormCuentaPagar(true);
+        $('form-cuenta-pagar').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     window.actualizarMonedaCuenta = () => {
         const moneda = $('cuenta-pagar-moneda')?.value || 'CLP';
         $('cuenta-pagar-monto-label').textContent = moneda === 'USD' ? 'Monto estimado (USD)' : 'Monto estimado (CLP)';
@@ -1046,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const boton = $('btn-guardar-cuenta-pagar');
         const monto = $('cuenta-pagar-monto').value;
         const moneda = $('cuenta-pagar-moneda').value;
+        const cuentaId = $('cuenta-pagar-id').value;
         const body = {
             nombre: $('cuenta-pagar-nombre').value.trim(),
             proveedor: $('cuenta-pagar-proveedor').value.trim() || null,
@@ -1065,20 +1107,19 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             boton.disabled = true;
             boton.textContent = 'Guardando...';
-            await apiFetch('/api/cuentas-pagar', {
-                method: 'POST',
-                body: JSON.stringify(body)
+            const bodyEnvio = cuentaId ? { ...body, monto_referencia: monto ? Number(monto) : null } : body;
+            await apiFetch(cuentaId ? `/api/cuentas-pagar/${cuentaId}` : '/api/cuentas-pagar', {
+                method: cuentaId ? 'PUT' : 'POST',
+                body: JSON.stringify(bodyEnvio)
             });
-            event.target.reset();
-            window.actualizarMonedaCuenta();
-            window.toggleFormCuentaPagar(false);
-            toast('Cuenta registrada correctamente');
+            window.cerrarFormularioCuentaPagar();
+            toast(cuentaId ? 'Cuenta actualizada correctamente' : 'Cuenta registrada correctamente');
             await cargarAgenda();
         } catch (err) {
             toast(err.message || 'No fue posible registrar la cuenta', 'error');
         } finally {
             boton.disabled = false;
-            boton.textContent = 'Guardar cuenta';
+            boton.textContent = cuentaId ? 'Guardar cambios' : 'Guardar cuenta';
         }
     };
 
@@ -1105,6 +1146,36 @@ document.addEventListener('DOMContentLoaded', () => {
     window.cerrarModalConfirmarPago = () => {
         cuentaPendientePago = null;
         hide($('modal-confirmar-pago'));
+    };
+
+    window.abrirModalFinalizarCuenta = id => {
+        cuentaPendienteFinalizar = cuentasPorPagar.find(cuenta => cuenta.id === id) || null;
+        if (!cuentaPendienteFinalizar) return;
+        $('modal-finalizar-cuenta-nombre').textContent = cuentaPendienteFinalizar.nombre;
+        $('modal-finalizar-cuenta-motivo').value = '';
+        show($('modal-finalizar-cuenta'));
+        setTimeout(() => $('modal-finalizar-cuenta-motivo').focus(), 0);
+    };
+
+    window.cerrarModalFinalizarCuenta = () => {
+        cuentaPendienteFinalizar = null;
+        hide($('modal-finalizar-cuenta'));
+    };
+
+    window.confirmarFinalizarCuenta = async () => {
+        if (!cuentaPendienteFinalizar) return;
+        const motivo = $('modal-finalizar-cuenta-motivo').value.trim();
+        if (motivo.length < 5) { toast('Indica brevemente el motivo', 'error'); return; }
+        const boton = $('btn-finalizar-cuenta');
+        try {
+            boton.disabled = true;
+            boton.textContent = 'Finalizando...';
+            const resultado = await apiFetch(`/api/cuentas-pagar/${cuentaPendienteFinalizar.id}/finalizar`, { method: 'PATCH', body: JSON.stringify({ motivo }) });
+            toast(resultado.mensaje, 'success');
+            window.cerrarModalFinalizarCuenta();
+            await cargarAgenda();
+        } catch (err) { toast(err.message || 'No fue posible finalizar la recurrencia', 'error'); }
+        finally { boton.disabled = false; boton.textContent = 'Finalizar recurrencia'; }
     };
 
     window.actualizarCamposPagoMoneda = () => {

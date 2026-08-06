@@ -442,6 +442,7 @@ a { text-decoration: none; color: inherit; }
 .cuenta-pagar-vence.vencida span { color: #dc2626; }
 .cuenta-pagar-acciones { display: flex; align-items: center; gap: 8px; }
 .cuenta-pagar-acciones button { white-space: nowrap; }
+.cuenta-pagar-acciones .cuenta-finalizar { color:#b91c1c; border-color:#fecaca; }
 .agenda-form { padding: 22px; }
 .agenda-form-titulo { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
 .agenda-form-titulo .form-title { margin-bottom: 3px; }

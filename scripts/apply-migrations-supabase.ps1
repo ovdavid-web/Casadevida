@@ -32,7 +32,8 @@ $migrations = @(
     'database\018_credenciales_temporales.sql',
     'database\019_secretaria_estructura_ministerial.sql',
     'database\020_actas_y_acuerdos.sql',
-    'database\021_recurrencia_y_moneda_cuentas.sql'
+    'database\021_recurrencia_y_moneda_cuentas.sql',
+    'database\022_edicion_y_cierre_cuentas.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -143,6 +144,9 @@ where table_schema = 'public' and table_name = 'cuentas_por_pagar'
   and column_name in ('moneda', 'monto_moneda_origen', 'tipo_cambio', 'comision_clp', 'cuenta_anterior_id', 'fecha_inicio_servicio', 'fecha_revision', 'aviso_revision_dias', 'nota_revision');
 select 'funcion_pago_recurrente=' || count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
 where n.nspname='public' and p.proname='registrar_pago_cuenta_recurrente';
+select 'columnas_cierre_cuentas=' || count(*) from information_schema.columns
+where table_schema='public' and table_name='cuentas_por_pagar'
+  and column_name in ('fecha_anulacion', 'motivo_anulacion', 'anulada_por');
 
 select 'miembros=' || count(*) from public.miembros;
 select 'personas=' || count(*) from public.personas;

@@ -434,6 +434,7 @@ a { text-decoration: none; color: inherit; }
 .cuenta-pagar-info { min-width: 0; }
 .cuenta-pagar-info strong { display: block; margin-bottom: 3px; font-size: 13px; }
 .cuenta-pagar-info span { color: var(--muted); font-size: 10px; }
+.cuenta-pagar-info .cuenta-revision-alerta { display:block; margin-top:6px; color:#b45309; font-weight:700; line-height:1.4; }
 .cuenta-pagar-vence { text-align: right; }
 .cuenta-pagar-vence strong { display: block; font-size: 12px; }
 .cuenta-pagar-vence span { display: block; margin-top: 2px; font-size: 10px; font-weight: 700; }

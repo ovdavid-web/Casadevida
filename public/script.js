@@ -994,15 +994,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     : dias === 0
                         ? 'Vence hoy'
                         : `Vence en ${dias} ${dias === 1 ? 'día' : 'días'}`;
-            const monto = cuenta.monto
-                ? ` · $${Number(cuenta.monto).toLocaleString('es-CL')}`
+            const montoReferencia = cuenta.moneda === 'USD' ? cuenta.monto_moneda_origen : cuenta.monto;
+            const monto = montoReferencia
+                ? ` · ${cuenta.moneda === 'USD' ? 'USD ' : '$'}${Number(montoReferencia).toLocaleString('es-CL')}`
                 : '';
+            const diasRevision = cuenta.fecha_revision ? diasHastaVencimiento(cuenta.fecha_revision) : null;
+            const requiereRevision = diasRevision !== null && diasRevision <= Number(cuenta.aviso_revision_dias || 30);
 
             return `
                 <article class="cuenta-pagar-item">
                     <div class="cuenta-pagar-info">
                         <strong>${sanitizar(cuenta.nombre)}</strong>
                         <span>${sanitizar(cuenta.categoria)}${cuenta.proveedor ? ` · ${sanitizar(cuenta.proveedor)}` : ''}${monto}</span>
+                        ${requiereRevision ? `<span class="cuenta-revision-alerta">Revisar ${sanitizar(cuenta.nota_revision || 'condiciones del servicio')} · ${cuenta.fecha_revision.split('-').reverse().join('/')}</span>` : ''}
                     </div>
                     <div class="cuenta-pagar-vence ${clase}">
                         <strong>${cuenta.fecha_vencimiento.split('-').reverse().join('/')}</strong>
@@ -1031,18 +1035,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    window.actualizarMonedaCuenta = () => {
+        const moneda = $('cuenta-pagar-moneda')?.value || 'CLP';
+        $('cuenta-pagar-monto-label').textContent = moneda === 'USD' ? 'Monto estimado (USD)' : 'Monto estimado (CLP)';
+        $('cuenta-pagar-monto').step = moneda === 'USD' ? '0.01' : '1';
+    };
+
     window.guardarCuentaPagar = async event => {
         event.preventDefault();
         const boton = $('btn-guardar-cuenta-pagar');
         const monto = $('cuenta-pagar-monto').value;
+        const moneda = $('cuenta-pagar-moneda').value;
         const body = {
             nombre: $('cuenta-pagar-nombre').value.trim(),
             proveedor: $('cuenta-pagar-proveedor').value.trim() || null,
             categoria: $('cuenta-pagar-categoria').value,
-            monto: monto ? Number(monto) : null,
+            monto: moneda === 'CLP' && monto ? Number(monto) : null,
+            moneda,
+            monto_moneda_origen: moneda === 'USD' && monto ? Number(monto) : null,
             fecha_vencimiento: $('cuenta-pagar-vencimiento').value,
             frecuencia: $('cuenta-pagar-frecuencia').value,
-            observaciones: $('cuenta-pagar-observaciones').value.trim() || null
+            observaciones: $('cuenta-pagar-observaciones').value.trim() || null,
+            fecha_inicio_servicio: $('cuenta-pagar-inicio').value || null,
+            fecha_revision: $('cuenta-pagar-revision').value || null,
+            aviso_revision_dias: Number($('cuenta-pagar-aviso').value),
+            nota_revision: $('cuenta-pagar-nota-revision').value.trim() || null
         };
 
         try {
@@ -1053,6 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(body)
             });
             event.target.reset();
+            window.actualizarMonedaCuenta();
             window.toggleFormCuentaPagar(false);
             toast('Cuenta registrada correctamente');
             await cargarAgenda();
@@ -1071,6 +1089,12 @@ document.addEventListener('DOMContentLoaded', () => {
         $('modal-pago-monto').value = cuentaPendientePago.monto
             ? Math.round(Number(cuentaPendientePago.monto))
             : '';
+        $('modal-pago-fecha').value = hoyChileTexto();
+        $('modal-pago-moneda').value = cuentaPendientePago.moneda || 'CLP';
+        $('modal-pago-monto-origen').value = cuentaPendientePago.monto_moneda_origen || '';
+        $('modal-pago-tipo-cambio').value = '';
+        $('modal-pago-comision').value = '0';
+        window.actualizarCamposPagoMoneda();
         $('modal-pago-ayuda').textContent = cuentaPendientePago.estado === 'pagada'
             ? 'Este pago fue confirmado anteriormente sin generar un egreso. Al continuar se completará el registro financiero.'
             : 'Al confirmar se registrará inmediatamente el egreso financiero.';
@@ -1083,12 +1107,24 @@ document.addEventListener('DOMContentLoaded', () => {
         hide($('modal-confirmar-pago'));
     };
 
+    window.actualizarCamposPagoMoneda = () => {
+        $('modal-pago-usd')?.classList.toggle('hidden', $('modal-pago-moneda')?.value !== 'USD');
+    };
+
     window.confirmarPagoCuenta = async () => {
         if (!cuentaPendientePago) return;
         const monto = Number($('modal-pago-monto').value);
+        const moneda = $('modal-pago-moneda').value;
+        const montoOrigen = $('modal-pago-monto-origen').value ? Number($('modal-pago-monto-origen').value) : null;
+        const tipoCambio = $('modal-pago-tipo-cambio').value ? Number($('modal-pago-tipo-cambio').value) : null;
+        const comisionClp = $('modal-pago-comision').value ? Number($('modal-pago-comision').value) : 0;
         if (!Number.isFinite(monto) || monto <= 0) {
             toast('Confirma un monto mayor a 0', 'error');
             $('modal-pago-monto').focus();
+            return;
+        }
+        if (moneda === 'USD' && (!montoOrigen || !tipoCambio)) {
+            toast('Confirma el monto en USD y el tipo de cambio', 'error');
             return;
         }
         const boton = $('btn-confirmar-pago');
@@ -1097,9 +1133,9 @@ document.addEventListener('DOMContentLoaded', () => {
             boton.textContent = 'Guardando...';
             await apiFetch(`/api/cuentas-pagar/${cuentaPendientePago.id}/pagar`, {
                 method: 'PATCH',
-                body: JSON.stringify({ monto })
+                body: JSON.stringify({ monto, moneda, monto_origen: montoOrigen, tipo_cambio: tipoCambio, comision_clp: comisionClp, fecha_pago: $('modal-pago-fecha').value })
             });
-            toast('Pago confirmado y egreso registrado');
+            toast('Pago confirmado; se actualizó el historial y la recurrencia');
             window.cerrarModalConfirmarPago();
             await cargarAgenda();
         } catch (err) {

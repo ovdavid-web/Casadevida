@@ -41,13 +41,22 @@ router.post('/', verificarToken, accesoFinanciero, async (req, res) => {
             monto,
             fecha_vencimiento,
             frecuencia,
-            observaciones
+            observaciones,
+            moneda,
+            monto_moneda_origen,
+            fecha_inicio_servicio,
+            fecha_revision,
+            aviso_revision_dias,
+            nota_revision
         } = req.body;
 
         const nombreLimpio = String(nombre || '').trim();
         const montoNumerico = monto === null || monto === undefined || monto === ''
             ? null
             : Number(monto);
+        const monedaValida = moneda || 'CLP';
+        const montoOrigenNumerico = monto_moneda_origen ? Number(monto_moneda_origen) : null;
+        const avisoDias = Number.isInteger(Number(aviso_revision_dias)) ? Number(aviso_revision_dias) : 30;
 
         if (nombreLimpio.length < 2 || nombreLimpio.length > 150) {
             return res.status(400).json({ error: 'Ingresa un nombre válido para la cuenta' });
@@ -61,6 +70,13 @@ router.post('/', verificarToken, accesoFinanciero, async (req, res) => {
         if (!FRECUENCIAS.includes(frecuencia)) {
             return res.status(400).json({ error: 'Frecuencia no válida' });
         }
+        if (!['CLP', 'USD'].includes(monedaValida)) {
+            return res.status(400).json({ error: 'Moneda no válida' });
+        }
+        if (monedaValida === 'USD' && montoOrigenNumerico !== null && (!Number.isFinite(montoOrigenNumerico) || montoOrigenNumerico <= 0)) {
+            return res.status(400).json({ error: 'El monto estimado en USD no es válido' });
+        }
+        if (avisoDias < 0 || avisoDias > 365) return res.status(400).json({ error: 'La anticipación de revisión no es válida' });
         if (montoNumerico !== null && (!Number.isFinite(montoNumerico) || montoNumerico <= 0)) {
             return res.status(400).json({ error: 'El monto debe ser mayor a 0' });
         }
@@ -75,7 +91,13 @@ router.post('/', verificarToken, accesoFinanciero, async (req, res) => {
                 fecha_vencimiento,
                 frecuencia,
                 estado: 'pendiente',
-                observaciones: String(observaciones || '').trim() || null
+                observaciones: String(observaciones || '').trim() || null,
+                moneda: monedaValida,
+                monto_moneda_origen: monedaValida === 'USD' ? montoOrigenNumerico : null,
+                fecha_inicio_servicio: fecha_inicio_servicio || null,
+                fecha_revision: fecha_revision || null,
+                aviso_revision_dias: avisoDias,
+                nota_revision: String(nota_revision || '').trim() || null
             })
             .select()
             .single();
@@ -104,10 +126,19 @@ router.patch('/:id/pagar', verificarToken, accesoFinanciero, async (req, res) =>
     try {
         const { id } = req.params;
         const montoFinal = Number(req.body.monto);
+        const moneda = req.body.moneda || 'CLP';
+        const montoOrigen = req.body.monto_origen ? Number(req.body.monto_origen) : null;
+        const tipoCambio = req.body.tipo_cambio ? Number(req.body.tipo_cambio) : null;
+        const comisionClp = req.body.comision_clp ? Number(req.body.comision_clp) : 0;
 
         if (!Number.isFinite(montoFinal) || montoFinal <= 0) {
             return res.status(400).json({ error: 'Confirma un monto mayor a 0' });
         }
+        if (!['CLP', 'USD'].includes(moneda)) return res.status(400).json({ error: 'Moneda no válida' });
+        if (moneda === 'USD' && (!Number.isFinite(montoOrigen) || montoOrigen <= 0 || !Number.isFinite(tipoCambio) || tipoCambio <= 0)) {
+            return res.status(400).json({ error: 'Confirma el monto en USD y el tipo de cambio aplicado' });
+        }
+        if (!Number.isFinite(comisionClp) || comisionClp < 0) return res.status(400).json({ error: 'La comisión no es válida' });
 
         const { data: antes, error: errorCuenta } = await supabase
             .from('cuentas_por_pagar')
@@ -123,64 +154,33 @@ router.patch('/:id/pagar', verificarToken, accesoFinanciero, async (req, res) =>
             return res.status(400).json({ error: 'La cuenta no puede registrarse como pagada' });
         }
 
-        const fechaChile = new Intl.DateTimeFormat('en-CA', {
+        const fechaChile = req.body.fecha_pago || new Intl.DateTimeFormat('en-CA', {
             timeZone: 'America/Santiago',
             year: 'numeric',
             month: '2-digit',
             day: '2-digit'
         }).format(new Date());
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaChile)) return res.status(400).json({ error: 'La fecha de pago no es válida' });
 
-        const { data: egreso, error: errorEgreso } = await supabase
-            .from('egresos')
-            .insert({
-                item: antes.nombre,
-                categoria: antes.categoria,
-                proveedor: antes.proveedor || null,
-                monto: montoFinal,
-                fecha: antes.fecha_pago
-                    ? new Date(antes.fecha_pago).toISOString().slice(0, 10)
-                    : fechaChile,
-                observaciones: antes.observaciones
-                    ? `Cuenta por pagar: ${antes.observaciones}`
-                    : 'Generado desde cuentas por pagar',
-                registrado_por: req.usuario.id
-            })
-            .select()
-            .single();
-
-        if (errorEgreso) throw errorEgreso;
-
-        const { data: cuenta, error: errorActualizacion } = await supabase
-            .from('cuentas_por_pagar')
-            .update({
-                estado: 'pagada',
-                fecha_pago: antes.fecha_pago || new Date().toISOString(),
-                monto: montoFinal,
-                egreso_id: egreso.id
-            })
-            .eq('id', id)
-            .is('egreso_id', null)
-            .select()
-            .single();
-
-        if (errorActualizacion || !cuenta) {
-            await supabase.from('egresos').delete().eq('id', egreso.id);
-            throw errorActualizacion || new Error('No fue posible vincular el egreso');
-        }
-
-        await supabase.from('auditoria').insert({
-            usuario_id: req.usuario.id,
-            accion: 'MARCAR_PAGADA',
-            tabla: 'cuentas_por_pagar',
-            registro_id: id,
-            datos_antes: antes,
-            datos_despues: cuenta
+        const { data: resultado, error: errorPago } = await supabase.rpc('registrar_pago_cuenta_recurrente', {
+            p_cuenta_id: id,
+            p_usuario_id: req.usuario.id,
+            p_total_clp: montoFinal,
+            p_fecha_pago: fechaChile,
+            p_moneda: moneda,
+            p_monto_origen: moneda === 'USD' ? montoOrigen : null,
+            p_tipo_cambio: moneda === 'USD' ? tipoCambio : null,
+            p_comision_clp: comisionClp
         });
+        if (errorPago) throw errorPago;
 
         res.json({
-            mensaje: 'Pago confirmado y egreso registrado',
-            cuenta,
-            egreso,
+            mensaje: resultado?.siguiente
+                ? 'Pago confirmado; egreso y próximo vencimiento registrados'
+                : 'Pago confirmado y egreso registrado',
+            cuenta: resultado?.cuenta,
+            egreso: resultado?.egreso,
+            siguiente: resultado?.siguiente || null,
             egreso_generado: true
         });
     } catch (err) {

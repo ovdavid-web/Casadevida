@@ -535,9 +535,14 @@
                                 <div class="form-group"><label>Cuenta o servicio *</label><input id="cuenta-pagar-nombre" type="text" maxlength="150" placeholder="Electricidad, Internet..." required></div>
                                 <div class="form-group"><label>Proveedor</label><input id="cuenta-pagar-proveedor" type="text" maxlength="150"></div>
                                 <div class="form-group"><label>Categoría *</label><select id="cuenta-pagar-categoria" required><option>Infraestructura</option><option>Pastoral</option><option>Operacional</option><option>Ministerial</option><option>Tecnología</option><option>Otro</option></select></div>
-                                <div class="form-group"><label>Monto estimado</label><input id="cuenta-pagar-monto" type="number" min="1" step="1" placeholder="Opcional"></div>
+                                <div class="form-group"><label>Moneda *</label><select id="cuenta-pagar-moneda" onchange="actualizarMonedaCuenta()"><option value="CLP">Pesos chilenos (CLP)</option><option value="USD">Dólares (USD)</option></select></div>
+                                <div class="form-group"><label id="cuenta-pagar-monto-label">Monto estimado (CLP)</label><input id="cuenta-pagar-monto" type="number" min="0.01" step="0.01" placeholder="Opcional"></div>
                                 <div class="form-group"><label>Vencimiento *</label><input id="cuenta-pagar-vencimiento" type="date" required></div>
                                 <div class="form-group"><label>Frecuencia *</label><select id="cuenta-pagar-frecuencia" required><option value="unica">Única</option><option value="mensual">Mensual</option><option value="trimestral">Trimestral</option><option value="semestral">Semestral</option><option value="anual">Anual</option></select></div>
+                                <div class="form-group"><label>Inicio del servicio o contrato</label><input id="cuenta-pagar-inicio" type="date"></div>
+                                <div class="form-group"><label>Fecha de revisión o fin de promoción</label><input id="cuenta-pagar-revision" type="date"></div>
+                                <div class="form-group"><label>Avisar con anticipación</label><select id="cuenta-pagar-aviso"><option value="15">15 días</option><option value="30" selected>30 días</option><option value="60">60 días</option><option value="90">90 días</option></select></div>
+                                <div class="form-group"><label>Motivo de la revisión</label><input id="cuenta-pagar-nota-revision" type="text" maxlength="300" placeholder="Revisar promoción, plan o proveedor"></div>
                                 <div class="form-group cuenta-pagar-observaciones"><label>Observaciones</label><input id="cuenta-pagar-observaciones" type="text" maxlength="300"></div>
                             </div>
                             <div class="form-actions">
@@ -1224,6 +1229,21 @@
         <div class="modal-agenda-header">
             <div><h3 id="modal-pago-titulo">Confirmar pago</h3><p id="modal-pago-nombre">Cuenta seleccionada</p></div>
             <button type="button" onclick="cerrarModalConfirmarPago()" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="form-group">
+            <label for="modal-pago-fecha">Fecha efectiva del pago *</label>
+            <input id="modal-pago-fecha" type="date">
+        </div>
+        <div class="form-group">
+            <label for="modal-pago-moneda">Moneda del cobro *</label>
+            <select id="modal-pago-moneda" onchange="actualizarCamposPagoMoneda()"><option value="CLP">Pesos chilenos (CLP)</option><option value="USD">Dólares (USD)</option></select>
+        </div>
+        <div id="modal-pago-usd" class="hidden">
+            <div class="form-grid">
+                <div class="form-group"><label for="modal-pago-monto-origen">Monto cobrado (USD) *</label><input id="modal-pago-monto-origen" type="number" min="0.01" step="0.01"></div>
+                <div class="form-group"><label for="modal-pago-tipo-cambio">Tipo de cambio *</label><input id="modal-pago-tipo-cambio" type="number" min="0.0001" step="0.0001"></div>
+                <div class="form-group span-2"><label for="modal-pago-comision">Comisión o impuesto (CLP)</label><input id="modal-pago-comision" type="number" min="0" step="1" value="0"></div>
+            </div>
         </div>
         <div class="form-group">
             <label for="modal-pago-monto">Monto final pagado (CLP $) *</label>

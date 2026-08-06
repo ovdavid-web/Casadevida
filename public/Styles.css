@@ -772,11 +772,14 @@ body.modal-abierto { overflow: hidden; }
 .familia-identidad strong { display:inline; font-size:15px; }
 .familia-identidad span { margin-left:10px; color:var(--muted); font-size:12px; white-space:nowrap; }
 .familia-agregar { flex:none; }
-.familia-integrantes { border-top:1px solid var(--border); }
+.familia-integrantes { display:grid; grid-template-rows:0fr; border-top:1px solid transparent; opacity:.35; transition:grid-template-rows 140ms ease-out,opacity 100ms ease-out,border-color 100ms ease-out; }
+.familia-integrantes.expandida { grid-template-rows:1fr; border-top-color:var(--border); opacity:1; }
+.familia-integrantes-contenido { min-height:0; overflow:hidden; }
 .familia-integrante { display:flex; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--border-soft); }
 .familia-integrante:last-child { border-bottom:0; }
 .familia-integrante-nombre { flex:1; min-width:0; font-size:14px; font-weight:600; }
 .familia-vacia { padding:14px 20px; color:var(--muted); font-size:13px; }
+@media (prefers-reduced-motion:reduce) { .familia-integrantes,.familia-toggle span { transition:none; } }
 .estructura-arbol { padding:20px 22px; }
 .estructura-area { padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff; }
 .estructura-area + .estructura-area { margin-top:12px; }

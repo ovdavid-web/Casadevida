@@ -2101,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const expandida = familiasExpandidas.has(familiaId);
         const contenido = $(`familia-integrantes-${familiaId}`);
         const boton = $(`familia-toggle-${familiaId}`);
-        contenido?.classList.toggle('hidden', !expandida);
+        contenido?.classList.toggle('expandida', expandida);
         if (boton) {
             boton.classList.toggle('expandido', expandida);
             boton.setAttribute('aria-expanded', String(expandida));
@@ -2139,7 +2139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     ${puedeEditarDirectorio() ? `<button class="btn-table familia-agregar" onclick="mostrarAgregarIntegrante('${f.id}', decodeURIComponent('${nombreCodificado}'))">+ Agregar</button>` : ''}
                 </div>
-                <div id="familia-integrantes-${f.id}" class="familia-integrantes ${expandida ? '' : 'hidden'}">
+                <div id="familia-integrantes-${f.id}" class="familia-integrantes ${expandida ? 'expandida' : ''}"><div class="familia-integrantes-contenido">
                 ${integrantes.length === 0
                     ? `<div class="familia-vacia">Sin integrantes aún</div>`
                     : integrantes.map(m => `
@@ -2149,7 +2149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${puedeEditarDirectorio() ? `<button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>` : ''}
                         </div>`).join('')
                 }
-                </div>
+                </div></div>
             </div>`;
         }).join('');
     }

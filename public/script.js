@@ -488,10 +488,126 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'vista-finanzas-reporte') cargarReporte();
         if (id === 'vista-egresos')          cargarEgresos();
         if (id === 'vista-inicio-admin')      cargarAgenda();
-        if (id === 'vista-secretaria')        cargarEstructuraSecretaria();
+        if (id === 'vista-secretaria')        cargarSecretaria();
         if (id === 'vista-perfil-miembro')    cargarMiPerfil();
         if (id === 'vista-mis-aportes')        cargarMisAportes();
     }
+
+    let secretariaActas = [];
+    let secretariaAcuerdos = [];
+    let secretariaPersonas = [];
+
+    async function cargarSecretaria() {
+        try {
+            const [actasData, acuerdosData, personasData] = await Promise.all([
+                apiFetch('/api/secretaria/actas'),
+                apiFetch('/api/secretaria/acuerdos'),
+                apiFetch('/api/personas')
+            ]);
+            secretariaActas = actasData.actas || [];
+            secretariaAcuerdos = acuerdosData.acuerdos || [];
+            secretariaPersonas = personasData.personas || [];
+            renderActasSecretaria();
+            renderAcuerdosSecretaria();
+            llenarSelectoresSecretaria();
+        } catch (err) {
+            ['secretaria-lista-actas', 'secretaria-lista-acuerdos'].forEach(id => {
+                if ($(id)) $(id).innerHTML = `<div class="secretaria-estado error">${sanitizar(err.message)}</div>`;
+            });
+        }
+    }
+
+    window.cambiarSeccionSecretaria = (seccion, boton) => {
+        document.querySelectorAll('.secretaria-seccion').forEach(item => item.classList.add('hidden'));
+        $(`secretaria-seccion-${seccion}`)?.classList.remove('hidden');
+        document.querySelectorAll('.secretaria-tabs button').forEach(item => item.classList.remove('activo'));
+        boton?.classList.add('activo');
+        if (seccion === 'estructura') cargarEstructuraSecretaria();
+    };
+
+    const fechaSecretaria = valor => valor
+        ? new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${valor}T00:00:00Z`))
+        : 'Sin fecha';
+
+    function renderActasSecretaria() {
+        const contenedor = $('secretaria-lista-actas');
+        if (!contenedor) return;
+        if (!secretariaActas.length) {
+            contenedor.innerHTML = '<div class="secretaria-estado"><strong>Aún no hay actas registradas.</strong><p>Las actas quedarán ordenadas por fecha y conservarán su historial.</p></div>';
+            return;
+        }
+        contenedor.innerHTML = secretariaActas.map(acta => `
+            <article class="secretaria-registro">
+                <div class="secretaria-registro-numero">ACTA<br><strong>${String(acta.numero).padStart(3, '0')}</strong></div>
+                <div class="secretaria-registro-cuerpo"><div><h4>${sanitizar(acta.titulo)}</h4><p>${fechaSecretaria(acta.fecha)}${acta.lugar ? ` · ${sanitizar(acta.lugar)}` : ''}</p></div>${acta.objetivo ? `<p class="secretaria-registro-resumen">${sanitizar(acta.objetivo)}</p>` : ''}</div>
+                <span class="secretaria-estado-badge ${acta.estado}">${sanitizar(acta.estado)}</span>
+            </article>`).join('');
+    }
+
+    function renderAcuerdosSecretaria() {
+        const contenedor = $('secretaria-lista-acuerdos');
+        if (!contenedor) return;
+        if (!secretariaAcuerdos.length) {
+            contenedor.innerHTML = '<div class="secretaria-estado"><strong>Aún no hay acuerdos registrados.</strong><p>Podrás vincular cada acuerdo con su acta y responsable.</p></div>';
+            return;
+        }
+        contenedor.innerHTML = secretariaAcuerdos.map(acuerdo => {
+            const persona = Array.isArray(acuerdo.personas) ? acuerdo.personas[0] : acuerdo.personas;
+            const responsable = [persona?.nombres, persona?.apellidos].filter(Boolean).join(' ') || 'Sin responsable';
+            const acta = Array.isArray(acuerdo.actas) ? acuerdo.actas[0] : acuerdo.actas;
+            return `<article class="secretaria-registro acuerdo">
+                <div class="secretaria-registro-cuerpo"><h4>${sanitizar(acuerdo.descripcion)}</h4><p>${sanitizar(responsable)}${acta ? ` · Acta ${String(acta.numero).padStart(3, '0')}` : ''}${acuerdo.fecha_compromiso ? ` · ${fechaSecretaria(acuerdo.fecha_compromiso)}` : ''}</p></div>
+                <select aria-label="Estado del acuerdo" onchange="actualizarEstadoAcuerdo('${acuerdo.id}', this.value)"><option value="pendiente" ${acuerdo.estado === 'pendiente' ? 'selected' : ''}>Pendiente</option><option value="en_proceso" ${acuerdo.estado === 'en_proceso' ? 'selected' : ''}>En proceso</option><option value="cumplido" ${acuerdo.estado === 'cumplido' ? 'selected' : ''}>Cumplido</option><option value="cancelado" ${acuerdo.estado === 'cancelado' ? 'selected' : ''}>Cancelado</option></select>
+            </article>`;
+        }).join('');
+    }
+
+    function llenarSelectoresSecretaria() {
+        const selectActa = $('acuerdo-acta');
+        const selectPersona = $('acuerdo-responsable');
+        const selectParticipantes = $('acta-participantes');
+        if (selectActa) selectActa.innerHTML = '<option value="">Sin acta relacionada</option>' + secretariaActas.map(acta => `<option value="${acta.id}">Acta ${String(acta.numero).padStart(3, '0')} · ${sanitizar(acta.titulo)}</option>`).join('');
+        if (selectPersona) selectPersona.innerHTML = '<option value="">Sin responsable asignado</option>' + secretariaPersonas.filter(persona => persona.estado === 'activo').map(persona => `<option value="${persona.id}">${sanitizar(persona.nombre)}</option>`).join('');
+        if (selectParticipantes) selectParticipantes.innerHTML = secretariaPersonas.filter(persona => persona.estado === 'activo').map(persona => `<option value="${persona.id}">${sanitizar(persona.nombre)}</option>`).join('');
+    }
+
+    window.guardarActa = async event => {
+        event.preventDefault();
+        try {
+            const participantes = [...$('acta-participantes').selectedOptions].map(opcion => opcion.value);
+            const data = await apiFetch('/api/secretaria/actas', { method: 'POST', body: JSON.stringify({ titulo: $('acta-titulo').value, tipo: $('acta-tipo').value, fecha: $('acta-fecha').value, lugar: $('acta-lugar').value, objetivo: $('acta-objetivo').value, desarrollo: $('acta-desarrollo').value, participantes, estado: 'borrador' }) });
+            toast(data.mensaje, 'success');
+            event.target.reset();
+            event.target.classList.add('hidden');
+            await cargarSecretaria();
+        } catch (err) { toast(err.message, 'error'); }
+    };
+
+    window.abrirFormularioAcuerdo = () => {
+        llenarSelectoresSecretaria();
+        $('form-nuevo-acuerdo')?.classList.remove('hidden');
+    };
+
+    window.guardarAcuerdo = async event => {
+        event.preventDefault();
+        try {
+            const data = await apiFetch('/api/secretaria/acuerdos', { method: 'POST', body: JSON.stringify({ descripcion: $('acuerdo-descripcion').value, acta_id: $('acuerdo-acta').value || null, responsable_persona_id: $('acuerdo-responsable').value || null, fecha_compromiso: $('acuerdo-fecha').value || null, estado: $('acuerdo-estado').value }) });
+            toast(data.mensaje, 'success');
+            event.target.reset();
+            event.target.classList.add('hidden');
+            await cargarSecretaria();
+        } catch (err) { toast(err.message, 'error'); }
+    };
+
+    window.actualizarEstadoAcuerdo = async (id, estado) => {
+        const acuerdo = secretariaAcuerdos.find(item => item.id === id);
+        if (!acuerdo) return;
+        try {
+            const data = await apiFetch(`/api/secretaria/acuerdos/${id}`, { method: 'PUT', body: JSON.stringify({ descripcion: acuerdo.descripcion, responsable_persona_id: acuerdo.responsable_persona_id, fecha_compromiso: acuerdo.fecha_compromiso, observaciones: acuerdo.observaciones, estado }) });
+            toast(data.mensaje, 'success');
+            await cargarSecretaria();
+        } catch (err) { toast(err.message, 'error'); await cargarSecretaria(); }
+    };
 
     async function cargarEstructuraSecretaria() {
         const contenedor = $('secretaria-estructura-contenido');
@@ -2434,6 +2550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.max = hoyChile;
             return;
         }
+        if (el.id === 'acuerdo-fecha') return;
         if (!el.value) el.value = hoyChile;
     });
 

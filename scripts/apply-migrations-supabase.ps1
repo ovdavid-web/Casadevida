@@ -30,7 +30,8 @@ $migrations = @(
     'database\016_corregir_textos_roles.sql',
     'database\017_vincular_usuario_persona.sql',
     'database\018_credenciales_temporales.sql',
-    'database\019_secretaria_estructura_ministerial.sql'
+    'database\019_secretaria_estructura_ministerial.sql',
+    'database\020_actas_y_acuerdos.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -131,6 +132,10 @@ from information_schema.columns
 where table_schema = 'public'
   and table_name = 'departamentos'
   and column_name in ('departamento_padre_id', 'tipo', 'orden');
+select 'tablas_actas_acuerdos=' || count(*)
+from information_schema.tables
+where table_schema = 'public'
+  and table_name in ('actas', 'acta_participantes', 'acuerdos');
 
 select 'miembros=' || count(*) from public.miembros;
 select 'personas=' || count(*) from public.personas;

@@ -58,6 +58,7 @@ begin
             'pastor',
             'tesorero',
             'oficial',
+            'secretaria',
             'lider',
             'editor_contenido',
             'voluntario'
@@ -94,6 +95,7 @@ begin
               'pastor',
               'tesorero',
               'oficial',
+              'secretaria',
               'lider',
               'editor_contenido',
               'voluntario'

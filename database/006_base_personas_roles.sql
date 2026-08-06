@@ -135,6 +135,7 @@ values
     ('pastor', 'Pastor', 'Gestión pastoral y administrativa amplia', true),
     ('tesorero', 'Tesorero', 'Gestión completa del módulo financiero', true),
     ('oficial', 'Oficial', 'Funciones logísticas autorizadas', false),
+    ('secretaria', 'Secretaría', 'Gestión de actas, registros eclesiásticos y memoria institucional', true),
     ('lider', 'Líder', 'Coordinación de los equipos que dirige', false),
     ('editor_contenido', 'Editor de contenido', 'Gestión y publicación del contenido público', true),
     ('voluntario', 'Voluntario', 'Acceso a convocatorias y actividades del equipo de servicio', false),

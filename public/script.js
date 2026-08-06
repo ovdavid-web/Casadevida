@@ -237,12 +237,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const esOficialConsulta = () => getUsuario().rol === 'oficial';
     const esTesorero = () => getUsuario().rol === 'tesorero';
+    const esSecretaria = () => getUsuario().rol === 'secretaria';
     const tieneDirectorioLimitado = () => esOficialConsulta() || esTesorero();
-    const puedeGestionarEventos = () => !esOficialConsulta() && !esTesorero();
+    const puedeEditarDirectorio = () => !esOficialConsulta() && !esTesorero() && !esSecretaria();
+    const puedeGestionarEventos = () => !esOficialConsulta() && !esTesorero() && !esSecretaria();
 
     const configurarInterfazPorRol = usuario => {
         const esOficial = usuario.rol === 'oficial';
         const esPerfilTesorero = usuario.rol === 'tesorero';
+        const esPerfilSecretaria = usuario.rol === 'secretaria';
         const vistasOficial = new Set([
             'vista-inicio-admin',
             'vista-miembros',
@@ -256,13 +259,20 @@ document.addEventListener('DOMContentLoaded', () => {
             'vista-egresos',
             'vista-finanzas-reporte'
         ]);
+        const vistasSecretaria = new Set([
+            'vista-inicio-admin',
+            'vista-miembros',
+            'vista-secretaria'
+        ]);
 
         document.querySelectorAll('#menu-admin .nav-btn').forEach(boton => {
-            const visible = esOficial
-                ? vistasOficial.has(boton.dataset.target)
-                : esPerfilTesorero
-                    ? vistasTesorero.has(boton.dataset.target)
-                    : true;
+            const visible = esPerfilSecretaria
+                ? vistasSecretaria.has(boton.dataset.target)
+                : esOficial
+                    ? vistasOficial.has(boton.dataset.target)
+                    : esPerfilTesorero
+                        ? vistasTesorero.has(boton.dataset.target)
+                        : true;
             boton.parentElement?.classList.toggle('hidden', !visible);
         });
 
@@ -271,16 +281,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         $('menu-oficial-aportes')?.classList.toggle('hidden', !esOficial && !esPerfilTesorero);
 
-        $('btn-nuevo-evento')?.classList.toggle('hidden', esOficial || esPerfilTesorero);
+        $('btn-nuevo-evento')?.classList.toggle('hidden', esOficial || esPerfilTesorero || esPerfilSecretaria);
         $('btn-nueva-cuenta')?.classList.toggle('hidden', esOficial);
         ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'panel-cuentas-pagar'].forEach(id => {
-            $(id)?.classList.toggle('hidden', esOficial);
+            $(id)?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
         });
         ['btn-nueva-persona', 'btn-nueva-familia'].forEach(id => {
-            $(id)?.classList.toggle('hidden', esOficial || esPerfilTesorero);
+            $(id)?.classList.toggle('hidden', esOficial || esPerfilTesorero || esPerfilSecretaria);
         });
 
-        if (esOficial || esPerfilTesorero) {
+        if (esOficial || esPerfilTesorero || esPerfilSecretaria) {
             hide($('form-evento'));
             hide($('form-nuevo-miembro'));
             hide($('form-nueva-familia'));
@@ -328,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userAvatar.textContent = u.nombre.charAt(0).toUpperCase();
         configurarInterfazPorRol(u);
 
-        const esAdmin = ['superadmin', 'pastor', 'tesorero', 'oficial'].includes(u.rol);
+        const esAdmin = ['superadmin', 'pastor', 'secretaria', 'tesorero', 'oficial'].includes(u.rol);
         if (esAdmin) { show(menuAdmin); hide(menuMiembro); cambiarVista('vista-inicio-admin'); }
         else         { hide(menuAdmin); show(menuMiembro); cambiarVista('vista-perfil-miembro'); }
 
@@ -459,6 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function cambiarVista(id) {
         const vistasPermitidas = esOficialConsulta()
             ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes']
+            : esSecretaria()
+                ? ['vista-inicio-admin', 'vista-miembros', 'vista-secretaria']
             : esTesorero()
                 ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes', 'vista-finanzas', 'vista-egresos', 'vista-finanzas-reporte']
                 : null;
@@ -476,8 +488,53 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'vista-finanzas-reporte') cargarReporte();
         if (id === 'vista-egresos')          cargarEgresos();
         if (id === 'vista-inicio-admin')      cargarAgenda();
+        if (id === 'vista-secretaria')        cargarEstructuraSecretaria();
         if (id === 'vista-perfil-miembro')    cargarMiPerfil();
         if (id === 'vista-mis-aportes')        cargarMisAportes();
+    }
+
+    async function cargarEstructuraSecretaria() {
+        const contenedor = $('secretaria-estructura-contenido');
+        if (!contenedor) return;
+        contenedor.className = 'secretaria-estado';
+        contenedor.textContent = 'Cargando estructura…';
+
+        try {
+            const { departamentos = [], responsables = [] } = await apiFetch('/api/secretaria/estructura');
+            const vigentes = departamentos.filter(item => item.activo);
+            if (!vigentes.length) {
+                contenedor.innerHTML = '<strong>Aún no hay áreas registradas.</strong><p>La estructura se construirá vinculando áreas y responsables del directorio, conservando sus períodos históricos.</p>';
+                return;
+            }
+
+            const responsablesPorArea = responsables.reduce((indice, item) => {
+                if (!item.activo) return indice;
+                (indice[item.departamento_id] ||= []).push(item);
+                return indice;
+            }, {});
+            const hijosPorPadre = vigentes.reduce((indice, area) => {
+                const padre = area.departamento_padre_id || 'raiz';
+                (indice[padre] ||= []).push(area);
+                return indice;
+            }, {});
+            const textoSeguro = valor => String(valor || '').replace(/[&<>"']/g, caracter => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            })[caracter]);
+            const renderArea = area => {
+                const encargados = (responsablesPorArea[area.id] || []).map(item => {
+                    const persona = Array.isArray(item.personas) ? item.personas[0] : item.personas;
+                    const nombre = [persona?.nombres, persona?.apellidos].filter(Boolean).join(' ') || 'Responsable sin persona vinculada';
+                    return `<span>${textoSeguro(item.cargo || 'Responsable')}: <strong>${textoSeguro(nombre)}</strong></span>`;
+                }).join('');
+                const hijos = (hijosPorPadre[area.id] || []).map(renderArea).join('');
+                return `<article class="estructura-area"><div><small>${textoSeguro(area.tipo || 'ministerio')}</small><h4>${textoSeguro(area.nombre)}</h4>${area.descripcion ? `<p>${textoSeguro(area.descripcion)}</p>` : ''}<div class="estructura-responsables">${encargados || '<span>Sin responsable vigente</span>'}</div></div>${hijos ? `<div class="estructura-hijos">${hijos}</div>` : ''}</article>`;
+            };
+            contenedor.className = 'estructura-arbol';
+            contenedor.innerHTML = (hijosPorPadre.raiz || []).map(renderArea).join('');
+        } catch (err) {
+            contenedor.className = 'secretaria-estado error';
+            contenedor.textContent = err.message;
+        }
     }
 
     async function cargarMiPerfil() {
@@ -1268,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE NACIMIENTO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.fecha_nacimiento)}</div></div>
                             <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">FECHA DE BAUTISMO</div><div style="font-weight:600;font-size:14px;">${fecha(persona.miembro.fecha_bautismo)}</div></div>
                         </div>
-                        ${tieneDirectorioLimitado() ? '' : `<button type="button" class="btn-action" style="width:100%;margin-top:4px;" onclick="editarMiembro('${persona.miembro.id}')">Editar persona</button>`}
+                        ${puedeEditarDirectorio() ? `<button type="button" class="btn-action" style="width:100%;margin-top:4px;" onclick="editarMiembro('${persona.miembro.id}')">Editar persona</button>` : ''}
                     ` : `
                         <div style="background:var(--paper);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;">VÍNCULO DESDE</div><div style="font-weight:600;font-size:14px;">${fecha(persona.fecha_inicio)}</div></div>
                     `}
@@ -1569,7 +1626,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span style="font-weight:700;font-size:15px;">${f.nombre}</span>
                         <span style="font-size:12px;color:var(--muted);margin-left:10px;">${integrantes.length} integrante${integrantes.length !== 1 ? 's' : ''}</span>
                     </div>
-                    ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" onclick="mostrarAgregarIntegrante('${f.id}', '${f.nombre}')">+ Agregar</button>`}
+                    ${puedeEditarDirectorio() ? `<button class="btn-table" onclick="mostrarAgregarIntegrante('${f.id}', '${f.nombre}')">+ Agregar</button>` : ''}
                 </div>
                 ${integrantes.length === 0
                     ? `<div style="padding:12px 20px;color:var(--muted);font-size:13px;">Sin integrantes aún</div>`
@@ -1577,7 +1634,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid var(--border);">
                             <div class="mini-av">${m.nombre.substring(0,2).toUpperCase()}</div>
                             <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div></div>
-                            ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>`}
+                            ${puedeEditarDirectorio() ? `<button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>` : ''}
                         </div>`).join('')
                 }
             </div>`;
@@ -1593,7 +1650,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-bottom:1px solid var(--border);">
                 <div class="mini-av" style="background:var(--border);">${m.nombre.substring(0,2).toUpperCase()}</div>
                 <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div></div>
-                ${tieneDirectorioLimitado() ? '' : `<button class="btn-table" onclick="mostrarAsignarFamilia('${m.id}', '${m.nombre}')">Asignar familia</button>`}
+                ${puedeEditarDirectorio() ? `<button class="btn-table" onclick="mostrarAsignarFamilia('${m.id}', '${m.nombre}')">Asignar familia</button>` : ''}
             </div>`).join('');
     }
 

@@ -89,6 +89,7 @@ app.use('/api/familias', require('./routes/familias'));
 app.use('/api/egresos', require('./routes/egresos'));
 app.use('/api/eventos', require('./routes/eventos'));
 app.use('/api/cuentas-pagar', require('./routes/cuentas-pagar'));
+app.use('/api/secretaria', require('./routes/secretaria'));
 
 // Configuración pública segura para habilitar módulos según el entorno.
 app.get('/api/config', (req, res) => {
@@ -124,5 +125,5 @@ app.get('/*path', (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
     console.log(`📁 Sirviendo archivos desde /public`);
-    console.log(`🔐 Rutas: /api/auth · /api/miembros · /api/finanzas · /api/servicios · /api/familias · /api/egresos · /api/eventos · /api/cuentas-pagar`);
+    console.log(`🔐 Rutas: /api/auth · /api/miembros · /api/finanzas · /api/servicios · /api/familias · /api/egresos · /api/eventos · /api/cuentas-pagar · /api/secretaria`);
 });

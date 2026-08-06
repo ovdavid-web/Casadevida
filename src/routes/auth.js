@@ -9,6 +9,7 @@ const router = express.Router();
 const PRIORIDAD_ROLES = [
     'superadmin',
     'pastor',
+    'secretaria',
     'tesorero',
     'oficial',
     'editor_contenido',

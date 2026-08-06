@@ -6,13 +6,14 @@ const { esRutValido, formatearRut } = require('../utils/rut');
 const router = express.Router();
 const ROLES_DIRECTORIO = [
     'pastor',
+    'secretaria',
     'tesorero',
     'oficial',
     'lider',
     'editor_contenido',
     'voluntario'
 ];
-const ROLES_CRITICOS = ['pastor', 'tesorero', 'editor_contenido'];
+const ROLES_CRITICOS = ['pastor', 'secretaria', 'tesorero', 'editor_contenido'];
 
 async function obtenerRolesPersona(personaId) {
     const { data: asignaciones, error: errorAsignaciones } = await supabase
@@ -36,7 +37,7 @@ async function obtenerRolesPersona(personaId) {
     return roles || [];
 }
 
-router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), async (req, res) => {
+router.get('/', verificarToken, verificarRol('pastor', 'secretaria', 'tesorero', 'oficial'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('personas')

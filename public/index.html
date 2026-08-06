@@ -467,6 +467,7 @@
                     <li class="nav-section-title">ADMINISTRACIÓN</li>
                     <li><button class="nav-btn active" data-target="vista-inicio-admin"><span class="nav-icon">⬛</span> Panel General</button></li>
                     <li><button class="nav-btn" data-target="vista-miembros"><span class="nav-icon">👥</span> Directorio</button></li>
+                    <li><button class="nav-btn" data-target="vista-secretaria"><span class="nav-icon">📚</span> Secretaría y Registros</button></li>
                     <li id="menu-oficial-aportes" class="hidden"><button class="nav-btn" data-target="vista-mis-aportes"><span class="nav-icon">💳</span> Mis Aportes</button></li>
                     <li><button class="nav-btn" data-target="vista-servicios"><span class="nav-icon">🗓️</span> Servicios y Roles</button></li>
                     <li id="menu-separador-finanzas" class="nav-separator"></li>
@@ -662,6 +663,7 @@
                                         <h4>Roles</h4>
                                         <div id="editor-roles-lista" class="editor-roles-grid">
                                             <label><input type="checkbox" value="pastor"> Pastor</label>
+                                            <label><input type="checkbox" value="secretaria"> Secretaría</label>
                                             <label><input type="checkbox" value="tesorero"> Tesorero</label>
                                             <label><input type="checkbox" value="oficial"> Oficial</label>
                                             <label><input type="checkbox" value="editor_contenido"> Editor</label>
@@ -713,6 +715,25 @@
                             <h4 style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:600;">SIN GRUPO FAMILIAR</h4>
                             <div id="lista-sin-familia" class="table-card"></div>
                         </div>
+                    </div>
+                </section>
+                <section id="vista-secretaria" class="view-section hidden">
+                    <div class="page-header">
+                        <div><h1>Secretaría y Registros</h1><p>Memoria institucional, registros eclesiásticos y organización ministerial</p></div>
+                    </div>
+                    <div class="secretaria-modulos" aria-label="Áreas de Secretaría">
+                        <article><span>01</span><div><h3>Actas</h3><p>Reuniones, participantes, acuerdos y respaldo institucional.</p></div></article>
+                        <article><span>02</span><div><h3>Libro de acuerdos</h3><p>Compromisos adoptados, responsables y seguimiento.</p></div></article>
+                        <article><span>03</span><div><h3>Registros eclesiásticos</h3><p>Bautismos, matrimonios, presentaciones de niños y otros hitos.</p></div></article>
+                        <article class="activo"><span>04</span><div><h3>Estructura ministerial</h3><p>Áreas, responsables y períodos, vinculados al directorio.</p></div></article>
+                        <article><span>05</span><div><h3>Documentos institucionales</h3><p>Certificados y documentos generados bajo petición.</p></div></article>
+                        <article><span>06</span><div><h3>Resumen de tesorería</h3><p>Consulta administrativa simple, sin alterar los registros financieros.</p></div></article>
+                    </div>
+                    <div class="table-card secretaria-estructura">
+                        <div class="secretaria-estructura-header">
+                            <div><h3>Estructura ministerial</h3><p>Organización vigente e histórica de áreas y responsables.</p></div>
+                        </div>
+                        <div id="secretaria-estructura-contenido" class="secretaria-estado">Cargando estructura…</div>
                     </div>
                 </section>
                 <section id="vista-servicios" class="view-section hidden">

@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const supabase = require('../supabase');
 
 const PRIORIDAD_ROLES = [
-    'superadmin', 'pastor', 'tesorero', 'oficial',
+    'superadmin', 'pastor', 'secretaria', 'tesorero', 'oficial',
     'editor_contenido', 'lider', 'voluntario', 'miembro'
 ];
 

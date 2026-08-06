@@ -22,7 +22,8 @@ $migrations = @(
     'database\015_roles_por_persona.sql',
     'database\016_corregir_textos_roles.sql',
     'database\017_vincular_usuario_persona.sql',
-    'database\018_credenciales_temporales.sql'
+    'database\018_credenciales_temporales.sql',
+    'database\019_secretaria_estructura_ministerial.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -109,6 +110,20 @@ join public.roles r on r.id = rp.rol_id
 join public.permisos p on p.id = rp.permiso_id
 where r.codigo = 'tesorero'
   and p.codigo like 'aportes_historial.%';
+
+select 'rol_secretaria=' || count(*)
+from public.roles
+where codigo = 'secretaria' and activo;
+select 'permisos_secretaria=' || count(*)
+from public.rol_permisos rp
+join public.roles r on r.id = rp.rol_id
+join public.permisos p on p.id = rp.permiso_id
+where r.codigo = 'secretaria' and p.modulo = 'secretaria';
+select 'columnas_estructura=' || count(*)
+from information_schema.columns
+where table_schema = 'public'
+  and table_name = 'departamentos'
+  and column_name in ('departamento_padre_id', 'tipo', 'orden');
 
 select 'miembros=' || count(*) from public.miembros;
 select 'personas=' || count(*) from public.personas;

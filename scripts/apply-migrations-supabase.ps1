@@ -6,6 +6,13 @@ $ErrorActionPreference = 'Stop'
 
 $psql = Join-Path $ProjectRoot '.tools\postgresql-17.10\pgsql\bin\psql.exe'
 if (-not (Test-Path -LiteralPath $psql)) {
+    $worktreeParent = Split-Path -Parent $ProjectRoot
+    if ((Split-Path -Leaf $worktreeParent) -eq '.worktrees') {
+        $repositoryRoot = Split-Path -Parent $worktreeParent
+        $psql = Join-Path $repositoryRoot '.tools\postgresql-17.10\pgsql\bin\psql.exe'
+    }
+}
+if (-not (Test-Path -LiteralPath $psql)) {
     throw "No se encontro psql en $psql"
 }
 

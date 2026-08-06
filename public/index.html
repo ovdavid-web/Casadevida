@@ -745,8 +745,10 @@
                         <div id="secretaria-agenda-listado"></div>
                     </div>
                     <div id="secretaria-seccion-actas" class="secretaria-seccion">
-                        <div class="secretaria-barra"><div><h3>Actas institucionales</h3><p>Registro formal de reuniones y decisiones.</p></div><button class="btn-action" type="button" onclick="toggleForm('form-nueva-acta')">+ Nueva acta</button></div>
+                        <div class="secretaria-barra"><div><h3>Actas institucionales</h3><p>Registro formal de reuniones y decisiones.</p></div><button class="btn-action" type="button" onclick="abrirNuevaActa()">+ Nueva acta</button></div>
+                        <div class="secretaria-buscador"><input id="buscar-actas" type="search" placeholder="Buscar por número, título o contenido..." oninput="buscarActas()"><span id="buscar-actas-estado"></span></div>
                         <form id="form-nueva-acta" class="form-card admin-form hidden" onsubmit="guardarActa(event)">
+                            <input id="acta-id" type="hidden">
                             <h3 class="form-title">Nueva acta</h3>
                             <div class="form-grid">
                                 <div class="form-group span-2"><label>Título *</label><input id="acta-titulo" maxlength="180" required></div>
@@ -757,7 +759,7 @@
                                 <div class="form-group span-2"><label>Objetivo</label><textarea id="acta-objetivo" rows="2"></textarea></div>
                                 <div class="form-group span-2"><label>Desarrollo del acta</label><textarea id="acta-desarrollo" rows="6"></textarea></div>
                             </div>
-                            <div class="form-actions"><button class="btn-action" type="submit">Guardar borrador</button><button class="btn-cancel" type="button" onclick="toggleForm('form-nueva-acta')">Cancelar</button></div>
+                            <div class="form-actions"><button id="btn-guardar-acta" class="btn-action" type="submit">Guardar borrador</button><button class="btn-cancel" type="button" onclick="cerrarFormularioActa()">Cancelar</button></div>
                         </form>
                         <div id="secretaria-lista-actas" class="secretaria-listado"></div>
                     </div>
@@ -1224,6 +1226,17 @@
             <button id="btn-confirmar-suspension" type="button" class="btn-suspender-evento" onclick="confirmarSuspensionEvento()">Suspender evento</button>
         </div>
     </div>
+</div>
+<!-- Lector documental de actas -->
+<div id="modal-lector-acta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="lector-acta-titulo">
+    <div class="modal-agenda-panel lector-acta-panel">
+        <div class="modal-agenda-header"><div><h3 id="lector-acta-titulo">Acta</h3><p id="lector-acta-subtitulo"></p></div><button type="button" onclick="cerrarLectorActa()" aria-label="Cerrar">✕</button></div>
+        <article id="lector-acta-documento" class="acta-documento"></article>
+        <div class="lector-acta-acciones"><button type="button" class="btn-cancel" onclick="cerrarLectorActa()">Cerrar</button><button id="btn-editar-acta" type="button" class="btn-table" onclick="editarActaActual()">Editar borrador</button><button id="btn-cerrar-acta" type="button" class="btn-action" onclick="cerrarActaActual()">Cerrar acta</button><button id="btn-reabrir-acta" type="button" class="btn-table" onclick="abrirReaperturaActa()">Reabrir</button><button type="button" class="btn-action" onclick="exportarActaActual()">Exportar PDF</button></div>
+    </div>
+</div>
+<div id="modal-reabrir-acta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="reabrir-acta-titulo">
+    <div class="modal-agenda-panel"><div class="modal-agenda-header"><div><h3 id="reabrir-acta-titulo">Reabrir acta cerrada</h3><p>La reapertura quedará registrada en auditoría.</p></div><button type="button" onclick="cerrarReaperturaActa()">✕</button></div><div class="form-group"><label for="motivo-reapertura-acta">Motivo *</label><textarea id="motivo-reapertura-acta" rows="4" maxlength="500"></textarea></div><div class="modal-agenda-actions"><button class="btn-cancel" type="button" onclick="cerrarReaperturaActa()">Cancelar</button><button id="btn-confirmar-reapertura" class="btn-action" type="button" onclick="confirmarReaperturaActa()">Reabrir como borrador</button></div></div>
 </div>
 <!-- Modal finalización de cuenta recurrente -->
 <div id="modal-finalizar-cuenta" class="modal-agenda hidden" role="dialog" aria-modal="true" aria-labelledby="modal-finalizar-cuenta-titulo">

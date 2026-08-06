@@ -506,6 +506,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let secretariaActas = [];
     let secretariaAcuerdos = [];
     let secretariaPersonas = [];
+    let actaActual = null;
+    let temporizadorBusquedaActas = null;
 
     async function cargarSecretaria() {
         try {
@@ -548,12 +550,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         contenedor.innerHTML = secretariaActas.map(acta => `
-            <article class="secretaria-registro">
+            <article class="secretaria-registro acta-seleccionable" role="button" tabindex="0" onclick="abrirLectorActa('${acta.id}')" onkeydown="if(event.key==='Enter') abrirLectorActa('${acta.id}')">
                 <div class="secretaria-registro-numero">ACTA<br><strong>${String(acta.numero).padStart(3, '0')}</strong></div>
                 <div class="secretaria-registro-cuerpo"><div><h4>${sanitizar(acta.titulo)}</h4><p>${fechaSecretaria(acta.fecha)}${acta.lugar ? ` · ${sanitizar(acta.lugar)}` : ''}</p></div>${acta.objetivo ? `<p class="secretaria-registro-resumen">${sanitizar(acta.objetivo)}</p>` : ''}</div>
                 <span class="secretaria-estado-badge ${acta.estado}">${sanitizar(acta.estado)}</span>
             </article>`).join('');
     }
+
+    window.buscarActas = () => {
+        clearTimeout(temporizadorBusquedaActas);
+        temporizadorBusquedaActas = setTimeout(async () => {
+            const termino = $('buscar-actas').value.trim();
+            $('buscar-actas-estado').textContent = termino ? 'Buscando…' : '';
+            try {
+                const data = await apiFetch(`/api/secretaria/actas${termino ? `?q=${encodeURIComponent(termino)}` : ''}`);
+                secretariaActas = data.actas || [];
+                renderActasSecretaria();
+                $('buscar-actas-estado').textContent = termino ? `${secretariaActas.length} resultado${secretariaActas.length === 1 ? '' : 's'}` : '';
+            } catch (err) { $('buscar-actas-estado').textContent = err.message; }
+        }, 300);
+    };
 
     function renderAcuerdosSecretaria() {
         const contenedor = $('secretaria-lista-acuerdos');
@@ -582,16 +598,110 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectParticipantes) selectParticipantes.innerHTML = secretariaPersonas.filter(persona => persona.estado === 'activo').map(persona => `<option value="${persona.id}">${sanitizar(persona.nombre)}</option>`).join('');
     }
 
+    window.abrirNuevaActa = () => {
+        $('form-nueva-acta').reset();
+        $('acta-id').value = '';
+        $('btn-guardar-acta').textContent = 'Guardar borrador';
+        llenarSelectoresSecretaria();
+        $('form-nueva-acta').classList.remove('hidden');
+        $('acta-titulo').focus();
+    };
+
+    window.cerrarFormularioActa = () => {
+        $('form-nueva-acta').reset();
+        $('acta-id').value = '';
+        $('form-nueva-acta').classList.add('hidden');
+    };
+
     window.guardarActa = async event => {
         event.preventDefault();
         try {
             const participantes = [...$('acta-participantes').selectedOptions].map(opcion => opcion.value);
-            const data = await apiFetch('/api/secretaria/actas', { method: 'POST', body: JSON.stringify({ titulo: $('acta-titulo').value, tipo: $('acta-tipo').value, fecha: $('acta-fecha').value, lugar: $('acta-lugar').value, objetivo: $('acta-objetivo').value, desarrollo: $('acta-desarrollo').value, participantes, estado: 'borrador' }) });
+            const id = $('acta-id').value;
+            const data = await apiFetch(id ? `/api/secretaria/actas/${id}` : '/api/secretaria/actas', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ titulo: $('acta-titulo').value, tipo: $('acta-tipo').value, fecha: $('acta-fecha').value, lugar: $('acta-lugar').value, objetivo: $('acta-objetivo').value, desarrollo: $('acta-desarrollo').value, participantes, estado: 'borrador' }) });
             toast(data.mensaje, 'success');
-            event.target.reset();
-            event.target.classList.add('hidden');
+            window.cerrarFormularioActa();
             await cargarSecretaria();
         } catch (err) { toast(err.message, 'error'); }
+    };
+
+    const personasActa = acta => (acta.acta_participantes || []).map(item => {
+        const persona = Array.isArray(item.personas) ? item.personas[0] : item.personas;
+        return [persona?.nombres, persona?.apellidos].filter(Boolean).join(' ');
+    }).filter(Boolean);
+
+    const acuerdosActa = acta => acta.acuerdos || [];
+
+    const documentoActaHtml = acta => {
+        const participantes = personasActa(acta);
+        const acuerdos = acuerdosActa(acta);
+        return `<header class="acta-documento-cabecera"><img src="/logo-cdv-negro.png" alt="Casa de Vida"><div><span>CASA DE VIDA</span><small>SECRETARÍA Y REGISTROS</small></div></header>
+            <div class="acta-documento-titulo"><small>ACTA N.º ${String(acta.numero).padStart(3,'0')}</small><h2>${sanitizar(acta.titulo)}</h2><p>${fechaSecretaria(acta.fecha)}${acta.lugar ? ` · ${sanitizar(acta.lugar)}` : ''}</p></div>
+            <section><h3>Información general</h3><dl><div><dt>Tipo</dt><dd>${sanitizar(acta.tipo)}</dd></div><div><dt>Estado</dt><dd>${sanitizar(acta.estado)}</dd></div></dl></section>
+            <section><h3>Participantes</h3><p>${participantes.length ? participantes.map(sanitizar).join(', ') : 'Sin participantes registrados.'}</p></section>
+            ${acta.objetivo ? `<section><h3>Objetivo</h3><p>${sanitizar(acta.objetivo)}</p></section>` : ''}
+            <section><h3>Desarrollo</h3><p class="acta-texto-largo">${sanitizar(acta.desarrollo || 'Sin desarrollo registrado.')}</p></section>
+            ${acuerdos.length ? `<section><h3>Acuerdos</h3><ol>${acuerdos.map(acuerdo => `<li>${sanitizar(acuerdo.descripcion)} <small>(${sanitizar(acuerdo.estado)})</small></li>`).join('')}</ol></section>` : ''}
+            ${acta.observaciones ? `<section><h3>Observaciones</h3><p>${sanitizar(acta.observaciones)}</p></section>` : ''}
+            <footer>Documento generado desde la Plataforma Casa de Vida · Acta ${String(acta.numero).padStart(3,'0')}</footer>`;
+    };
+
+    window.abrirLectorActa = id => {
+        actaActual = secretariaActas.find(acta => acta.id === id) || null;
+        if (!actaActual) return;
+        $('lector-acta-titulo').textContent = `Acta ${String(actaActual.numero).padStart(3,'0')}`;
+        $('lector-acta-subtitulo').textContent = actaActual.titulo;
+        $('lector-acta-documento').innerHTML = documentoActaHtml(actaActual);
+        $('btn-editar-acta').classList.toggle('hidden', actaActual.estado !== 'borrador');
+        $('btn-cerrar-acta').classList.toggle('hidden', actaActual.estado !== 'borrador');
+        $('btn-reabrir-acta').classList.toggle('hidden', actaActual.estado !== 'cerrada');
+        show($('modal-lector-acta'));
+    };
+
+    window.cerrarLectorActa = () => { hide($('modal-lector-acta')); };
+
+    window.editarActaActual = () => {
+        if (!actaActual || actaActual.estado !== 'borrador') return;
+        window.cerrarLectorActa();
+        llenarSelectoresSecretaria();
+        $('acta-id').value = actaActual.id;
+        $('acta-titulo').value = actaActual.titulo || '';
+        $('acta-tipo').value = actaActual.tipo || 'reunion';
+        $('acta-fecha').value = actaActual.fecha || '';
+        $('acta-lugar').value = actaActual.lugar || '';
+        $('acta-objetivo').value = actaActual.objetivo || '';
+        $('acta-desarrollo').value = actaActual.desarrollo || '';
+        const ids = new Set((actaActual.acta_participantes || []).map(item => item.persona_id));
+        [...$('acta-participantes').options].forEach(opcion => { opcion.selected = ids.has(opcion.value); });
+        $('btn-guardar-acta').textContent = 'Guardar cambios';
+        $('form-nueva-acta').classList.remove('hidden');
+        $('form-nueva-acta').scrollIntoView({ behavior:'smooth', block:'start' });
+    };
+
+    window.cerrarActaActual = async () => {
+        if (!actaActual || !window.confirm('¿Cerrar y proteger esta acta? Después requerirá una reapertura auditada para editarla.')) return;
+        try { const data = await apiFetch(`/api/secretaria/actas/${actaActual.id}/cerrar`, { method:'PATCH' }); toast(data.mensaje,'success'); window.cerrarLectorActa(); await cargarSecretaria(); }
+        catch (err) { toast(err.message,'error'); }
+    };
+
+    window.abrirReaperturaActa = () => { $('motivo-reapertura-acta').value=''; show($('modal-reabrir-acta')); };
+    window.cerrarReaperturaActa = () => hide($('modal-reabrir-acta'));
+    window.confirmarReaperturaActa = async () => {
+        if (!actaActual) return;
+        const motivo=$('motivo-reapertura-acta').value.trim();
+        if (motivo.length<5) { toast('Indica el motivo de reapertura','error'); return; }
+        try { const data=await apiFetch(`/api/secretaria/actas/${actaActual.id}/reabrir`,{method:'PATCH',body:JSON.stringify({motivo})}); toast(data.mensaje,'success'); window.cerrarReaperturaActa(); window.cerrarLectorActa(); await cargarSecretaria(); }
+        catch(err){ toast(err.message,'error'); }
+    };
+
+    window.exportarActaActual = () => {
+        if (!actaActual) return;
+        const ventana=window.open('','_blank');
+        if (!ventana) { toast('Permite ventanas emergentes para exportar el acta','error'); return; }
+        ventana.opener = null;
+        const estilos=`body{font-family:Arial,sans-serif;color:#172033;margin:0}.hoja{width:180mm;margin:0 auto;padding:16mm 15mm}.acta-documento-cabecera{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #cbd5e1;padding-bottom:10px}.acta-documento-cabecera img{width:105px}.acta-documento-cabecera div{text-align:right}.acta-documento-cabecera span,.acta-documento-cabecera small{display:block}.acta-documento-titulo{text-align:center;padding:28px 0 20px}.acta-documento-titulo h2{font-size:22px;margin:8px 0}section{margin:20px 0}section h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #e2e8f0;padding-bottom:5px}p,li,dd{font-size:12px;line-height:1.7;white-space:pre-wrap}dl{display:flex;gap:30px}dt{font-size:9px;text-transform:uppercase;color:#64748b}dd{margin:3px 0}footer{margin-top:35px;padding-top:10px;border-top:1px solid #e2e8f0;text-align:center;font-size:9px;color:#64748b}@page{size:A4;margin:0}@media print{.hoja{margin:0}}`;
+        ventana.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Acta ${String(actaActual.numero).padStart(3,'0')}</title><style>${estilos}</style></head><body><main class="hoja acta-documento">${documentoActaHtml(actaActual).replace('src="/','src="'+location.origin+'/')}</main><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`);
+        ventana.document.close();
     };
 
     window.abrirFormularioAcuerdo = () => {

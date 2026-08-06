@@ -710,6 +710,36 @@ body.modal-abierto { overflow: hidden; }
 .secretaria-estado { padding:34px 22px; text-align:center; color:var(--muted); }
 .secretaria-estado strong { display:block; margin-bottom:7px; color:var(--text); }
 .secretaria-estado.error { color:#b91c1c; }
+.secretaria-buscador { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+.secretaria-buscador input { width:min(100%,440px); padding:11px 13px; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--text); font:inherit; }
+.secretaria-buscador input:focus { outline:2px solid #bfdbfe; border-color:#3b82f6; }
+.secretaria-buscador span { color:var(--muted); font-size:11px; }
+.acta-seleccionable { cursor:pointer; transition:background .16s ease, box-shadow .16s ease; }
+.acta-seleccionable:hover { background:#f8fafc; }
+.acta-seleccionable:focus-visible { position:relative; outline:2px solid #2563eb; outline-offset:-2px; }
+.lector-acta-panel { width:min(920px,calc(100vw - 36px)); max-height:94vh; overflow-y:auto; padding:0; }
+.lector-acta-panel .modal-agenda-header { position:sticky; top:0; z-index:2; margin:0; padding:18px 22px; border-bottom:1px solid var(--border-soft); background:rgba(255,255,255,.97); }
+.acta-documento { width:min(100%,760px); margin:22px auto; padding:42px 48px; border:1px solid #dbe3ee; border-radius:3px; background:#fff; box-shadow:0 10px 30px rgba(15,23,42,.07); color:#172033; }
+.acta-documento-cabecera { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:14px; border-bottom:1px solid #cbd5e1; }
+.acta-documento-cabecera img { width:105px; height:auto; }
+.acta-documento-cabecera div { text-align:right; }
+.acta-documento-cabecera span,.acta-documento-cabecera small { display:block; }
+.acta-documento-cabecera span { font-size:11px; font-weight:800; letter-spacing:.12em; }
+.acta-documento-cabecera small { margin-top:4px; color:#64748b; font-size:8px; letter-spacing:.12em; }
+.acta-documento-titulo { padding:30px 0 22px; text-align:center; }
+.acta-documento-titulo small { color:#64748b; font-size:10px; font-weight:800; letter-spacing:.08em; }
+.acta-documento-titulo h2 { margin:8px 0; font-size:24px; line-height:1.25; }
+.acta-documento-titulo p { color:#64748b; font-size:12px; }
+.acta-documento section { margin:22px 0; }
+.acta-documento section h3 { margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid #e2e8f0; font-size:11px; letter-spacing:.09em; text-transform:uppercase; }
+.acta-documento section p,.acta-documento li,.acta-documento dd { font-size:13px; line-height:1.75; }
+.acta-documento dl { display:flex; gap:50px; }
+.acta-documento dt { color:#64748b; font-size:9px; letter-spacing:.07em; text-transform:uppercase; }
+.acta-documento dd { margin:3px 0 0; text-transform:capitalize; }
+.acta-documento ol { padding-left:22px; }
+.acta-texto-largo { white-space:pre-wrap; }
+.acta-documento footer { margin-top:38px; padding-top:11px; border-top:1px solid #e2e8f0; color:#64748b; text-align:center; font-size:9px; }
+.lector-acta-acciones { position:sticky; bottom:0; z-index:2; display:flex; justify-content:flex-end; flex-wrap:wrap; gap:9px; padding:15px 22px; border-top:1px solid var(--border-soft); background:rgba(255,255,255,.97); }
 .estructura-arbol { padding:20px 22px; }
 .estructura-area { padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff; }
 .estructura-area + .estructura-area { margin-top:12px; }
@@ -1129,6 +1159,15 @@ body.modal-abierto { overflow: hidden; }
     #vista-secretaria .agenda-form input,
     #vista-secretaria .agenda-form select,
     #vista-secretaria .agenda-form textarea { font-size: 16px; }
+    .secretaria-buscador { align-items:stretch; flex-direction:column; gap:6px; }
+    .secretaria-buscador input { width:100%; font-size:16px; }
+    .lector-acta-panel { width:100%; max-height:96dvh; }
+    .acta-documento { width:calc(100% - 24px); margin:12px; padding:26px 20px; }
+    .acta-documento-cabecera img { width:82px; }
+    .acta-documento-titulo h2 { font-size:20px; }
+    .acta-documento dl { gap:24px; }
+    .lector-acta-acciones { justify-content:stretch; padding:12px; }
+    .lector-acta-acciones button { flex:1 1 calc(50% - 9px); }
     #vista-secretaria .agenda-opciones { display: grid; grid-template-columns: 1fr; gap: 11px; }
     #vista-secretaria .agenda-miniatura-selector { align-items: flex-start; }
     #vista-secretaria .agenda-miniatura-preview { flex-basis: 68px; width: 68px; height: 68px; }

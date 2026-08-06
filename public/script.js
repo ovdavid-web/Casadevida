@@ -2093,6 +2093,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // ============================================================
     // MÓDULO FAMILIAS
     // ============================================================
+    const familiasExpandidas = new Set();
+
+    window.toggleFamilia = familiaId => {
+        if (familiasExpandidas.has(familiaId)) familiasExpandidas.delete(familiaId);
+        else familiasExpandidas.add(familiaId);
+        const expandida = familiasExpandidas.has(familiaId);
+        const contenido = $(`familia-integrantes-${familiaId}`);
+        const boton = $(`familia-toggle-${familiaId}`);
+        contenido?.classList.toggle('hidden', !expandida);
+        if (boton) {
+            boton.classList.toggle('expandido', expandida);
+            boton.setAttribute('aria-expanded', String(expandida));
+            boton.setAttribute('aria-label', expandida ? 'Ocultar integrantes' : 'Mostrar integrantes');
+        }
+    };
+
     async function cargarFamilias() {
         try {
             const [dataFamilias, dataMiembros] = await Promise.all([apiFetch('/api/familias'), apiFetch('/api/miembros')]);
@@ -2111,24 +2127,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (familias.length === 0) { lista.innerHTML = `<div style="text-align:center;color:var(--muted);padding:24px;">No hay grupos familiares creados aún</div>`; return; }
         lista.innerHTML = familias.map(f => {
             const integrantes = f.miembros || [];
+            const expandida = familiasExpandidas.has(f.id);
+            const nombreCodificado = encodeURIComponent(f.nombre).replace(/'/g, '%27');
             return `
-            <div class="table-card" style="margin-bottom:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px 10px;">
-                    <div>
-                        <span style="font-weight:700;font-size:15px;">${f.nombre}</span>
-                        <span style="font-size:12px;color:var(--muted);margin-left:10px;">${integrantes.length} integrante${integrantes.length !== 1 ? 's' : ''}</span>
+            <div class="table-card familia-card">
+                <div class="familia-resumen">
+                    <button id="familia-toggle-${f.id}" class="familia-toggle ${expandida ? 'expandido' : ''}" type="button" onclick="toggleFamilia('${f.id}')" aria-expanded="${expandida}" aria-controls="familia-integrantes-${f.id}" aria-label="${expandida ? 'Ocultar' : 'Mostrar'} integrantes"><span>⌄</span></button>
+                    <div class="familia-identidad">
+                        <strong>${sanitizar(f.nombre)}</strong>
+                        <span>${integrantes.length} integrante${integrantes.length !== 1 ? 's' : ''}</span>
                     </div>
-                    ${puedeEditarDirectorio() ? `<button class="btn-table" onclick="mostrarAgregarIntegrante('${f.id}', '${f.nombre}')">+ Agregar</button>` : ''}
+                    ${puedeEditarDirectorio() ? `<button class="btn-table familia-agregar" onclick="mostrarAgregarIntegrante('${f.id}', decodeURIComponent('${nombreCodificado}'))">+ Agregar</button>` : ''}
                 </div>
+                <div id="familia-integrantes-${f.id}" class="familia-integrantes ${expandida ? '' : 'hidden'}">
                 ${integrantes.length === 0
-                    ? `<div style="padding:12px 20px;color:var(--muted);font-size:13px;">Sin integrantes aún</div>`
+                    ? `<div class="familia-vacia">Sin integrantes aún</div>`
                     : integrantes.map(m => `
-                        <div style="display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid var(--border);">
-                            <div class="mini-av">${m.nombre.substring(0,2).toUpperCase()}</div>
-                            <div style="flex:1;"><div style="font-size:14px;font-weight:600;">${m.nombre}</div></div>
+                        <div class="familia-integrante">
+                            <div class="mini-av">${sanitizar(m.nombre.substring(0,2).toUpperCase())}</div>
+                            <div class="familia-integrante-nombre">${sanitizar(m.nombre)}</div>
                             ${puedeEditarDirectorio() ? `<button class="btn-table" style="color:#ef4444;border-color:#ef4444;" onclick="quitarDeFamily('${m.id}', '${f.id}')">Quitar</button>` : ''}
                         </div>`).join('')
                 }
+                </div>
             </div>`;
         }).join('');
     }

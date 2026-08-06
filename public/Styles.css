@@ -763,6 +763,20 @@ body.modal-abierto { overflow: hidden; }
 .participantes-seleccionados > span { display:inline-flex; align-items:center; gap:7px; padding:7px 8px 7px 10px; border:1px solid #bfdbfe; border-radius:999px; background:#eff6ff; color:#1e40af; font-size:11px; font-weight:700; }
 .participantes-seleccionados > span button { display:flex; align-items:center; justify-content:center; width:18px; height:18px; padding:0; border:0; border-radius:50%; background:#dbeafe; color:#1e40af; font-size:14px; cursor:pointer; }
 .participantes-seleccionados > p { color:var(--muted); font-size:11px; }
+.familia-card { margin-bottom:12px; }
+.familia-resumen { display:flex; align-items:center; gap:12px; min-height:68px; padding:12px 18px; }
+.familia-toggle { display:flex; align-items:center; justify-content:center; flex:0 0 34px; width:34px; height:34px; padding:0; border:1px solid var(--border); border-radius:9px; background:#fff; color:#475569; cursor:pointer; }
+.familia-toggle span { display:block; font-size:19px; line-height:1; transform:rotate(-90deg); transition:transform .18s ease; }
+.familia-toggle.expandido span { transform:rotate(0deg); }
+.familia-identidad { flex:1; min-width:0; }
+.familia-identidad strong { display:inline; font-size:15px; }
+.familia-identidad span { margin-left:10px; color:var(--muted); font-size:12px; white-space:nowrap; }
+.familia-agregar { flex:none; }
+.familia-integrantes { border-top:1px solid var(--border); }
+.familia-integrante { display:flex; align-items:center; gap:12px; padding:10px 20px; border-bottom:1px solid var(--border-soft); }
+.familia-integrante:last-child { border-bottom:0; }
+.familia-integrante-nombre { flex:1; min-width:0; font-size:14px; font-weight:600; }
+.familia-vacia { padding:14px 20px; color:var(--muted); font-size:13px; }
 .estructura-arbol { padding:20px 22px; }
 .estructura-area { padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff; }
 .estructura-area + .estructura-area { margin-top:12px; }
@@ -1192,6 +1206,9 @@ body.modal-abierto { overflow: hidden; }
     .lector-acta-acciones { justify-content:stretch; padding:12px; }
     .lector-acta-acciones button { flex:1 1 calc(50% - 9px); }
     .participantes-disponibles { grid-template-columns:1fr; }
+    .familia-resumen { gap:9px; padding:11px 12px; }
+    .familia-identidad strong,.familia-identidad span { display:block; margin-left:0; }
+    .familia-integrante { padding:10px 12px; }
     #vista-secretaria .agenda-opciones { display: grid; grid-template-columns: 1fr; gap: 11px; }
     #vista-secretaria .agenda-miniatura-selector { align-items: flex-start; }
     #vista-secretaria .agenda-miniatura-preview { flex-basis: 68px; width: 68px; height: 68px; }

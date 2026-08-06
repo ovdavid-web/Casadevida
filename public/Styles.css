@@ -745,6 +745,24 @@ body.modal-abierto { overflow: hidden; }
 .modal-confirmacion-panel h3 { margin-bottom:10px; font-size:20px; }
 .modal-confirmacion-panel > p { color:var(--muted); font-size:13px; line-height:1.65; }
 .modal-confirmacion-panel .modal-agenda-actions { justify-content:center; margin-top:24px; }
+.participantes-selector { overflow:hidden; border:1px solid var(--border); border-radius:11px; background:#fff; }
+.participantes-categorias { display:flex; gap:7px; padding:12px; border-bottom:1px solid var(--border-soft); overflow-x:auto; }
+.participantes-categorias button { padding:8px 11px; border:1px solid var(--border); border-radius:999px; background:#fff; color:#475569; font-size:11px; font-weight:700; white-space:nowrap; cursor:pointer; }
+.participantes-categorias button.activo { border-color:#0f172a; background:#0f172a; color:#fff; }
+.participantes-selector > input { width:calc(100% - 24px) !important; margin:12px; }
+.participantes-disponibles { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; max-height:190px; padding:0 12px 12px; overflow-y:auto; }
+.participantes-disponibles > button { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; padding:10px 11px; border:1px solid var(--border-soft); border-radius:8px; background:#f8fafc; color:var(--text); text-align:left; cursor:pointer; }
+.participantes-disponibles > button span { overflow:hidden; font-size:12px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+.participantes-disponibles > button small { flex:none; color:#2563eb; font-size:9px; font-weight:800; }
+.participantes-disponibles > button.seleccionado { border-color:#a7f3d0; background:#ecfdf5; }
+.participantes-disponibles > button.seleccionado small { color:#047857; }
+.participantes-disponibles > p { grid-column:1/-1; padding:13px; color:var(--muted); font-size:12px; text-align:center; }
+.participantes-preseleccion { padding:12px; border-top:1px solid var(--border-soft); background:#f8fafc; }
+.participantes-preseleccion > span { display:block; margin-bottom:8px; color:#64748b; font-size:9px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; }
+.participantes-seleccionados { display:flex; flex-wrap:wrap; gap:7px; }
+.participantes-seleccionados > span { display:inline-flex; align-items:center; gap:7px; padding:7px 8px 7px 10px; border:1px solid #bfdbfe; border-radius:999px; background:#eff6ff; color:#1e40af; font-size:11px; font-weight:700; }
+.participantes-seleccionados > span button { display:flex; align-items:center; justify-content:center; width:18px; height:18px; padding:0; border:0; border-radius:50%; background:#dbeafe; color:#1e40af; font-size:14px; cursor:pointer; }
+.participantes-seleccionados > p { color:var(--muted); font-size:11px; }
 .estructura-arbol { padding:20px 22px; }
 .estructura-area { padding:16px; border:1px solid var(--border); border-radius:12px; background:#fff; }
 .estructura-area + .estructura-area { margin-top:12px; }
@@ -1173,6 +1191,7 @@ body.modal-abierto { overflow: hidden; }
     .acta-documento dl { gap:24px; }
     .lector-acta-acciones { justify-content:stretch; padding:12px; }
     .lector-acta-acciones button { flex:1 1 calc(50% - 9px); }
+    .participantes-disponibles { grid-template-columns:1fr; }
     #vista-secretaria .agenda-opciones { display: grid; grid-template-columns: 1fr; gap: 11px; }
     #vista-secretaria .agenda-miniatura-selector { align-items: flex-start; }
     #vista-secretaria .agenda-miniatura-preview { flex-basis: 68px; width: 68px; height: 68px; }

@@ -508,13 +508,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let secretariaPersonas = [];
     let actaActual = null;
     let temporizadorBusquedaActas = null;
+    let categoriaParticipantes = 'directorio';
+    const participantesActaSeleccionados = new Set();
+    const categoriasParticipantes = [
+        { codigo:'pastores', nombre:'Pastores', roles:['pastor'] },
+        { codigo:'oficiales', nombre:'Oficiales', roles:['oficial'] },
+        { codigo:'directorio', nombre:'Directorio', roles:['pastor','secretaria','tesorero','oficial'] },
+        { codigo:'lideres', nombre:'Líderes', roles:['lider'] },
+        { codigo:'voluntarios', nombre:'Voluntarios', roles:['voluntario'] }
+    ];
 
     async function cargarSecretaria() {
         try {
             const [actasData, acuerdosData, personasData] = await Promise.all([
                 apiFetch('/api/secretaria/actas'),
                 apiFetch('/api/secretaria/acuerdos'),
-                apiFetch('/api/personas')
+                apiFetch('/api/secretaria/participantes')
             ]);
             secretariaActas = actasData.actas || [];
             secretariaAcuerdos = acuerdosData.acuerdos || [];
@@ -522,6 +531,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderActasSecretaria();
             renderAcuerdosSecretaria();
             llenarSelectoresSecretaria();
+            renderSelectorParticipantes();
         } catch (err) {
             ['secretaria-lista-actas', 'secretaria-lista-acuerdos'].forEach(id => {
                 if ($(id)) $(id).innerHTML = `<div class="secretaria-estado error">${sanitizar(err.message)}</div>`;
@@ -592,17 +602,75 @@ document.addEventListener('DOMContentLoaded', () => {
     function llenarSelectoresSecretaria() {
         const selectActa = $('acuerdo-acta');
         const selectPersona = $('acuerdo-responsable');
-        const selectParticipantes = $('acta-participantes');
         if (selectActa) selectActa.innerHTML = '<option value="">Sin acta relacionada</option>' + secretariaActas.map(acta => `<option value="${acta.id}">Acta ${String(acta.numero).padStart(3, '0')} · ${sanitizar(acta.titulo)}</option>`).join('');
         if (selectPersona) selectPersona.innerHTML = '<option value="">Sin responsable asignado</option>' + secretariaPersonas.filter(persona => persona.estado === 'activo').map(persona => `<option value="${persona.id}">${sanitizar(persona.nombre)}</option>`).join('');
-        if (selectParticipantes) selectParticipantes.innerHTML = secretariaPersonas.filter(persona => persona.estado === 'activo').map(persona => `<option value="${persona.id}">${sanitizar(persona.nombre)}</option>`).join('');
+    }
+
+    const personaTieneCategoria = (persona, categoria) => {
+        const codigos = new Set((persona.roles || []).map(rol => rol.codigo));
+        return categoria.roles.some(rol => codigos.has(rol));
+    };
+
+    function renderSelectorParticipantes() {
+        const categorias = $('participantes-categorias');
+        if (!categorias) return;
+        categorias.innerHTML = categoriasParticipantes.map(categoria => `<button type="button" class="${categoria.codigo === categoriaParticipantes ? 'activo' : ''}" onclick="cambiarCategoriaParticipantes('${categoria.codigo}')">${categoria.nombre}</button>`).join('');
+        renderParticipantesDisponibles();
+        renderParticipantesSeleccionados();
+    }
+
+    window.cambiarCategoriaParticipantes = codigo => {
+        categoriaParticipantes = codigo;
+        if ($('buscar-participante-acta')) $('buscar-participante-acta').value = '';
+        renderSelectorParticipantes();
+    };
+
+    window.renderParticipantesDisponibles = () => {
+        const contenedor = $('participantes-disponibles');
+        if (!contenedor) return;
+        const categoria = categoriasParticipantes.find(item => item.codigo === categoriaParticipantes);
+        const termino = ($('buscar-participante-acta')?.value || '').trim().toLocaleLowerCase('es');
+        const personas = secretariaPersonas.filter(persona => personaTieneCategoria(persona, categoria)
+            && persona.nombre.toLocaleLowerCase('es').includes(termino));
+        contenedor.innerHTML = personas.length ? personas.map(persona => `<button type="button" class="${participantesActaSeleccionados.has(persona.id) ? 'seleccionado' : ''}" onclick="agregarParticipanteActa('${persona.id}')"><span>${sanitizar(persona.nombre)}</span><small>${participantesActaSeleccionados.has(persona.id) ? 'Agregado' : '+ Agregar'}</small></button>`).join('') : '<p>No hay personas en esta categoría.</p>';
+    };
+
+    window.agregarParticipanteActa = personaId => {
+        participantesActaSeleccionados.add(personaId);
+        renderParticipantesDisponibles();
+        renderParticipantesSeleccionados();
+    };
+
+    window.quitarParticipanteActa = personaId => {
+        participantesActaSeleccionados.delete(personaId);
+        renderParticipantesDisponibles();
+        renderParticipantesSeleccionados();
+    };
+
+    const buscarPersonaParticipante = id => {
+        const activa = secretariaPersonas.find(persona => persona.id === id);
+        if (activa) return activa;
+        const participante = (actaActual?.acta_participantes || []).find(item => item.persona_id === id);
+        const persona = Array.isArray(participante?.personas) ? participante.personas[0] : participante?.personas;
+        const nombre = [persona?.nombres, persona?.apellidos].filter(Boolean).join(' ');
+        return nombre ? { id, nombre, estado:'historico' } : null;
+    };
+
+    function renderParticipantesSeleccionados() {
+        const contenedor = $('participantes-seleccionados');
+        if (!contenedor) return;
+        const personas = [...participantesActaSeleccionados].map(buscarPersonaParticipante).filter(Boolean);
+        contenedor.innerHTML = personas.length ? personas.map(persona => `<span>${sanitizar(persona.nombre)}${persona.estado === 'historico' ? ' · histórico' : ''}<button type="button" onclick="quitarParticipanteActa('${persona.id}')" aria-label="Quitar a ${sanitizar(persona.nombre)}">×</button></span>`).join('') : '<p>Aún no has seleccionado participantes.</p>';
     }
 
     window.abrirNuevaActa = () => {
         $('form-nueva-acta').reset();
         $('acta-id').value = '';
+        participantesActaSeleccionados.clear();
+        categoriaParticipantes = 'directorio';
         $('btn-guardar-acta').textContent = 'Guardar borrador';
         llenarSelectoresSecretaria();
+        renderSelectorParticipantes();
         $('form-nueva-acta').classList.remove('hidden');
         $('acta-titulo').focus();
     };
@@ -610,13 +678,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.cerrarFormularioActa = () => {
         $('form-nueva-acta').reset();
         $('acta-id').value = '';
+        participantesActaSeleccionados.clear();
         $('form-nueva-acta').classList.add('hidden');
     };
 
     window.guardarActa = async event => {
         event.preventDefault();
         try {
-            const participantes = [...$('acta-participantes').selectedOptions].map(opcion => opcion.value);
+            const participantes = [...participantesActaSeleccionados];
             const id = $('acta-id').value;
             const data = await apiFetch(id ? `/api/secretaria/actas/${id}` : '/api/secretaria/actas', { method: id ? 'PUT' : 'POST', body: JSON.stringify({ titulo: $('acta-titulo').value, tipo: $('acta-tipo').value, fecha: $('acta-fecha').value, lugar: $('acta-lugar').value, objetivo: $('acta-objetivo').value, desarrollo: $('acta-desarrollo').value, participantes, estado: 'borrador' }) });
             toast(data.mensaje, 'success');
@@ -672,7 +741,9 @@ document.addEventListener('DOMContentLoaded', () => {
         $('acta-objetivo').value = actaActual.objetivo || '';
         $('acta-desarrollo').value = actaActual.desarrollo || '';
         const ids = new Set((actaActual.acta_participantes || []).map(item => item.persona_id));
-        [...$('acta-participantes').options].forEach(opcion => { opcion.selected = ids.has(opcion.value); });
+        participantesActaSeleccionados.clear();
+        ids.forEach(id => participantesActaSeleccionados.add(id));
+        renderSelectorParticipantes();
         $('btn-guardar-acta').textContent = 'Guardar cambios';
         $('form-nueva-acta').classList.remove('hidden');
         $('form-nueva-acta').scrollIntoView({ behavior:'smooth', block:'start' });

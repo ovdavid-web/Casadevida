@@ -755,7 +755,14 @@
                                 <div class="form-group"><label>Tipo</label><select id="acta-tipo"><option value="reunion">Reunión</option><option value="asamblea">Asamblea</option><option value="directorio">Directorio</option><option value="ministerial">Ministerial</option><option value="otra">Otra</option></select></div>
                                 <div class="form-group"><label>Fecha *</label><input id="acta-fecha" type="date" required></div>
                                 <div class="form-group span-2"><label>Lugar</label><input id="acta-lugar" maxlength="180"></div>
-                                <div class="form-group span-2"><label>Participantes del directorio</label><select id="acta-participantes" multiple size="5" aria-describedby="acta-participantes-ayuda"></select><span id="acta-participantes-ayuda" class="modal-agenda-ayuda">Puedes seleccionar varias personas manteniendo presionada la tecla Ctrl.</span></div>
+                                <div class="form-group span-2"><label>Participantes del directorio</label>
+                                    <div class="participantes-selector">
+                                        <div id="participantes-categorias" class="participantes-categorias" aria-label="Categorías de participantes"></div>
+                                        <input id="buscar-participante-acta" type="search" placeholder="Buscar persona en esta categoría..." oninput="renderParticipantesDisponibles()">
+                                        <div id="participantes-disponibles" class="participantes-disponibles"></div>
+                                        <div class="participantes-preseleccion"><span>Personas seleccionadas</span><div id="participantes-seleccionados" class="participantes-seleccionados"></div></div>
+                                    </div>
+                                </div>
                                 <div class="form-group span-2"><label>Objetivo</label><textarea id="acta-objetivo" rows="2"></textarea></div>
                                 <div class="form-group span-2"><label>Desarrollo del acta</label><textarea id="acta-desarrollo" rows="6"></textarea></div>
                             </div>

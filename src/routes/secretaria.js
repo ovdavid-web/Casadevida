@@ -24,6 +24,35 @@ async function auditar(usuarioId, accion, tabla, registroId, antes, despues) {
     if (error) throw error;
 }
 
+router.get('/participantes', verificarToken, verificarRol(...ROLES_SECRETARIA), async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('personas')
+            .select('id, nombres, apellidos, estado, vinculos_iglesia(estado), persona_roles(activo, roles(codigo, nombre))')
+            .order('nombres', { ascending: true });
+        if (error) throw error;
+        const personas = (data || []).filter(persona => {
+            const vinculos = persona.vinculos_iglesia || [];
+            return vinculos.some(vinculo => vinculo.estado === 'activo') || (!vinculos.length && persona.estado === 'activo');
+        }).map(persona => ({
+            id: persona.id,
+            nombre: [persona.nombres, persona.apellidos].filter(Boolean).join(' '),
+            estado: 'activo',
+            roles: (persona.persona_roles || [])
+                .filter(asignacion => asignacion.activo && asignacion.roles)
+                .map(asignacion => ({
+                    codigo: Array.isArray(asignacion.roles) ? asignacion.roles[0]?.codigo : asignacion.roles.codigo,
+                    nombre: Array.isArray(asignacion.roles) ? asignacion.roles[0]?.nombre : asignacion.roles.nombre
+                }))
+                .filter(rol => rol.codigo)
+        }));
+        res.json({ personas });
+    } catch (err) {
+        console.error('Error obteniendo participantes de actas:', err);
+        res.status(500).json({ error: 'No fue posible cargar los participantes' });
+    }
+});
+
 router.get('/actas', verificarToken, verificarRol(...ROLES_SECRETARIA), async (req, res) => {
     try {
         let consulta = supabase

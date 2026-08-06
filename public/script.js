@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         $('btn-nuevo-evento')?.classList.toggle('hidden', !puedeGestionarEventos());
         $('btn-nueva-cuenta')?.classList.toggle('hidden', !puedeGestionarCuentas());
-        ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'resumen-revisiones-contrato', 'panel-alertas-financieras'].forEach(id => {
+        ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'panel-alertas-financieras'].forEach(id => {
             $(id)?.classList.toggle('hidden', esOficial);
         });
         $('panel-cuentas-pagar')?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
@@ -945,7 +945,6 @@ document.addEventListener('DOMContentLoaded', () => {
             cuentasPorPagar = [];
             $('panel-cuentas-por-vencer').textContent = '—';
             $('panel-cuentas-vencidas').textContent = '—';
-            $('panel-revisiones-contrato').textContent = '—';
             if ($('panel-alertas-lista')) $('panel-alertas-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las alertas.</p>';
             if ($('cuentas-pagar-lista')) $('cuentas-pagar-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las cuentas por pagar.</p>';
         }
@@ -975,13 +974,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
             return dias >= 0 && dias <= 7;
         });
-        const revisiones = pendientes.filter(cuenta => cuenta.fecha_revision
-            && diasHastaVencimiento(cuenta.fecha_revision) <= Number(cuenta.aviso_revision_dias || 30));
 
         $('panel-cuentas-por-vencer').textContent = porVencer.length;
         $('panel-cuentas-vencidas').textContent = vencidas.length;
-        $('panel-revisiones-contrato').textContent = revisiones.length;
-        renderizarAlertasFinancierasPanel(pendientes, revisiones);
+        renderizarAlertasFinancierasPanel(pendientes);
+        mostrarAlertasDiarias(pendientes);
         $('cuentas-pagar-contador').textContent = pagosSinEgreso.length
             ? `${pagosSinEgreso.length} ${pagosSinEgreso.length === 1 ? 'pago requiere egreso' : 'pagos requieren egreso'}`
             : pendientes.length
@@ -1009,15 +1006,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const monto = montoReferencia
                 ? ` · ${cuenta.moneda === 'USD' ? 'USD ' : '$'}${Number(montoReferencia).toLocaleString('es-CL')}`
                 : '';
-            const diasRevision = cuenta.fecha_revision ? diasHastaVencimiento(cuenta.fecha_revision) : null;
-            const requiereRevision = diasRevision !== null && diasRevision <= Number(cuenta.aviso_revision_dias || 30);
 
             return `
                 <article class="cuenta-pagar-item">
                     <div class="cuenta-pagar-info">
                         <strong>${sanitizar(cuenta.nombre)}</strong>
                         <span>${sanitizar(cuenta.categoria)}${cuenta.proveedor ? ` · ${sanitizar(cuenta.proveedor)}` : ''}${monto}</span>
-                        ${requiereRevision ? `<span class="cuenta-revision-alerta">Revisar ${sanitizar(cuenta.nota_revision || 'condiciones del servicio')} · ${cuenta.fecha_revision.split('-').reverse().join('/')}</span>` : ''}
                     </div>
                     <div class="cuenta-pagar-vence ${clase}">
                         <strong>${cuenta.fecha_vencimiento.split('-').reverse().join('/')}</strong>
@@ -1034,7 +1028,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     };
 
-    function renderizarAlertasFinancierasPanel(pendientes, revisiones) {
+    function renderizarAlertasFinancierasPanel(pendientes) {
         const lista = $('panel-alertas-lista');
         if (!lista) return;
         const alertasPago = pendientes
@@ -1047,18 +1041,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 detalle: item.dias < 0 ? `Vencida hace ${Math.abs(item.dias)} día${Math.abs(item.dias) === 1 ? '' : 's'}` : item.dias === 0 ? 'Vence hoy' : `Vence en ${item.dias} día${item.dias === 1 ? '' : 's'}`,
                 fecha: item.cuenta.fecha_vencimiento
             }));
-        const alertasRevision = revisiones.map(cuenta => ({
-            tipo: 'revision',
-            prioridad: diasHastaVencimiento(cuenta.fecha_revision),
-            titulo: cuenta.nombre,
-            detalle: cuenta.nota_revision || 'Revisar condiciones, plan o proveedor',
-            fecha: cuenta.fecha_revision
-        }));
-        const alertas = [...alertasPago, ...alertasRevision]
+        const alertas = alertasPago
             .sort((a, b) => a.prioridad - b.prioridad)
             .slice(0, 8);
         if (!alertas.length) {
-            lista.innerHTML = '<p class="agenda-vacia">No hay pagos próximos ni contratos que requieran revisión.</p>';
+            lista.innerHTML = '<p class="agenda-vacia">No hay pagos próximos ni cuentas vencidas.</p>';
             return;
         }
         lista.innerHTML = alertas.map(alerta => `
@@ -1067,6 +1054,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div><strong>${sanitizar(alerta.titulo)}</strong><p>${sanitizar(alerta.detalle)}</p></div>
                 <time>${alerta.fecha.split('-').reverse().join('/')}</time>
             </article>`).join('');
+    }
+
+    async function mostrarAlertasDiarias(pendientes) {
+        const porMostrar = pendientes.filter(cuenta => {
+            const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
+            return !cuenta.alerta_vista_hoy && (dias === 7 || dias === 3 || dias <= 0);
+        });
+        for (const cuenta of porMostrar) {
+            const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
+            const mensaje = dias === 7
+                ? `${cuenta.nombre}: vence en una semana`
+                : dias === 3
+                    ? `${cuenta.nombre}: vence en 3 días`
+                    : dias === 0
+                        ? `${cuenta.nombre}: vence hoy`
+                        : `${cuenta.nombre}: está vencida hace ${Math.abs(dias)} día${Math.abs(dias) === 1 ? '' : 's'}`;
+            toast(mensaje, dias <= 0 ? 'error' : 'success');
+            cuenta.alerta_vista_hoy = true;
+            try {
+                await apiFetch(`/api/cuentas-pagar/alertas/${cuenta.id}/vista`, { method: 'POST' });
+            } catch (err) {
+                cuenta.alerta_vista_hoy = false;
+            }
+        }
     }
 
     window.toggleFormCuentaPagar = (abrir) => {
@@ -1109,10 +1120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         $('cuenta-pagar-monto').value = cuenta.moneda === 'USD' ? (cuenta.monto_moneda_origen || '') : (cuenta.monto || '');
         $('cuenta-pagar-vencimiento').value = cuenta.fecha_vencimiento;
         $('cuenta-pagar-frecuencia').value = cuenta.frecuencia;
-        $('cuenta-pagar-inicio').value = cuenta.fecha_inicio_servicio || '';
-        $('cuenta-pagar-revision').value = cuenta.fecha_revision || '';
-        $('cuenta-pagar-aviso').value = String(cuenta.aviso_revision_dias || 30);
-        $('cuenta-pagar-nota-revision').value = cuenta.nota_revision || '';
         $('cuenta-pagar-observaciones').value = cuenta.observaciones || '';
         $('btn-guardar-cuenta-pagar').textContent = 'Guardar cambios';
         window.actualizarMonedaCuenta();
@@ -1141,11 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             monto_moneda_origen: moneda === 'USD' && monto ? Number(monto) : null,
             fecha_vencimiento: $('cuenta-pagar-vencimiento').value,
             frecuencia: $('cuenta-pagar-frecuencia').value,
-            observaciones: $('cuenta-pagar-observaciones').value.trim() || null,
-            fecha_inicio_servicio: $('cuenta-pagar-inicio').value || null,
-            fecha_revision: $('cuenta-pagar-revision').value || null,
-            aviso_revision_dias: Number($('cuenta-pagar-aviso').value),
-            nota_revision: $('cuenta-pagar-nota-revision').value.trim() || null
+            observaciones: $('cuenta-pagar-observaciones').value.trim() || null
         };
 
         try {

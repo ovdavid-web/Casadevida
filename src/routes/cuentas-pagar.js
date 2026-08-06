@@ -17,18 +17,48 @@ const FRECUENCIAS = ['unica', 'mensual', 'trimestral', 'semestral', 'anual'];
 const accesoLecturaPanel = verificarRol('pastor', 'tesorero');
 const accesoFinanciero = verificarRol('tesorero');
 
+const fechaChile = () => new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit'
+}).format(new Date());
+
+async function agregarAlertadaHoy(cuentas, usuarioId) {
+    const ids = (cuentas || []).map(cuenta => cuenta.id);
+    if (!ids.length) return cuentas || [];
+    const { data, error } = await supabase.from('cuenta_alertas_vistas')
+        .select('cuenta_id').eq('usuario_id', usuarioId).eq('fecha', fechaChile()).in('cuenta_id', ids);
+    if (error) throw error;
+    const vistas = new Set((data || []).map(item => item.cuenta_id));
+    return cuentas.map(cuenta => ({ ...cuenta, alerta_vista_hoy: vistas.has(cuenta.id) }));
+}
+
 router.get('/alertas', verificarToken, verificarRol('pastor', 'secretaria', 'tesorero'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('cuentas_por_pagar')
-            .select('id, nombre, proveedor, fecha_vencimiento, frecuencia, estado, fecha_revision, aviso_revision_dias, nota_revision')
+            .select('id, nombre, proveedor, fecha_vencimiento, frecuencia, estado')
             .eq('estado', 'pendiente')
             .order('fecha_vencimiento', { ascending: true });
         if (error) throw error;
-        res.json({ cuentas: data || [] });
+        res.json({ cuentas: await agregarAlertadaHoy(data || [], req.usuario.id) });
     } catch (err) {
         console.error('Error obteniendo alertas de cuentas:', err);
         res.status(500).json({ error: 'No fue posible cargar las alertas financieras' });
+    }
+});
+
+router.post('/alertas/:id/vista', verificarToken, verificarRol('pastor', 'secretaria', 'tesorero'), async (req, res) => {
+    try {
+        const { data: cuenta, error: errorCuenta } = await supabase.from('cuentas_por_pagar')
+            .select('id').eq('id', req.params.id).eq('estado', 'pendiente').single();
+        if (errorCuenta || !cuenta) return res.status(404).json({ error: 'Cuenta pendiente no encontrada' });
+        const { error } = await supabase.from('cuenta_alertas_vistas').upsert({
+            cuenta_id: cuenta.id, usuario_id: req.usuario.id, fecha: fechaChile(), visto_en: new Date().toISOString()
+        }, { onConflict: 'cuenta_id,usuario_id,fecha', ignoreDuplicates: true });
+        if (error) throw error;
+        res.json({ mensaje: 'Alerta registrada como vista' });
+    } catch (err) {
+        console.error('Error registrando alerta vista:', err);
+        res.status(500).json({ error: 'No fue posible registrar la alerta' });
     }
 });
 
@@ -40,7 +70,7 @@ router.get('/', verificarToken, accesoLecturaPanel, async (req, res) => {
             .order('fecha_vencimiento', { ascending: true });
 
         if (error) throw error;
-        res.json({ cuentas: data || [] });
+        res.json({ cuentas: await agregarAlertadaHoy(data || [], req.usuario.id) });
     } catch (err) {
         console.error('Error obteniendo cuentas por pagar:', err);
         res.status(500).json({ error: 'Error interno del servidor' });

@@ -33,7 +33,8 @@ $migrations = @(
     'database\019_secretaria_estructura_ministerial.sql',
     'database\020_actas_y_acuerdos.sql',
     'database\021_recurrencia_y_moneda_cuentas.sql',
-    'database\022_edicion_y_cierre_cuentas.sql'
+    'database\022_edicion_y_cierre_cuentas.sql',
+    'database\023_alertas_diarias_cuentas.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -147,6 +148,8 @@ where n.nspname='public' and p.proname='registrar_pago_cuenta_recurrente';
 select 'columnas_cierre_cuentas=' || count(*) from information_schema.columns
 where table_schema='public' and table_name='cuentas_por_pagar'
   and column_name in ('fecha_anulacion', 'motivo_anulacion', 'anulada_por');
+select 'tabla_alertas_diarias=' || count(*) from information_schema.tables
+where table_schema='public' and table_name='cuenta_alertas_vistas';
 
 select 'miembros=' || count(*) from public.miembros;
 select 'personas=' || count(*) from public.personas;

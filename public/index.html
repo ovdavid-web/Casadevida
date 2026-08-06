@@ -468,7 +468,6 @@
                     <li><button class="nav-btn active" data-target="vista-inicio-admin"><span class="nav-icon">⬛</span> Panel General</button></li>
                     <li><button class="nav-btn" data-target="vista-miembros"><span class="nav-icon">👥</span> Directorio</button></li>
                     <li id="menu-oficial-aportes" class="hidden"><button class="nav-btn" data-target="vista-mis-aportes"><span class="nav-icon">💳</span> Mis Aportes</button></li>
-                    <li><button class="nav-btn" data-target="vista-visitas"><span class="nav-icon">👤</span> Visitas</button></li>
                     <li><button class="nav-btn" data-target="vista-servicios"><span class="nav-icon">🗓️</span> Servicios y Roles</button></li>
                     <li id="menu-separador-finanzas" class="nav-separator"></li>
                     <li id="menu-titulo-finanzas" class="nav-section-title">FINANZAS</li>
@@ -494,14 +493,6 @@
                     </div>
 
                     <div class="panel-resumen" aria-label="Resumen general">
-                        <article class="panel-resumen-card">
-                            <div class="panel-resumen-icono miembros" aria-hidden="true">●</div>
-                            <div>
-                                <span>Miembros activos</span>
-                                <strong id="panel-miembros-activos">—</strong>
-                                <p>Personas activas en el directorio</p>
-                            </div>
-                        </article>
                         <article class="panel-resumen-card">
                             <div class="panel-resumen-icono actividades" aria-hidden="true">◆</div>
                             <div>
@@ -721,28 +712,6 @@
                         <div style="margin-top:24px;">
                             <h4 style="font-size:13px;color:var(--muted);margin-bottom:12px;font-weight:600;">SIN GRUPO FAMILIAR</h4>
                             <div id="lista-sin-familia" class="table-card"></div>
-                        </div>
-                    </div>
-                </section>
-                <section id="vista-visitas" class="view-section hidden">
-                    <div class="page-header"><div><h1>Registro de Visitas</h1><p>Primera vez y seguimiento pastoral</p></div><button class="btn-action" onclick="toggleForm('form-nueva-visita')">+ Registrar Visita</button></div>
-                    <div id="form-nueva-visita" class="form-card hidden">
-                        <h3 class="form-title">Nueva Visita</h3>
-                        <form class="admin-form" onsubmit="registrarVisita(event)">
-                            <div class="form-grid">
-                                <div class="form-group"><label>Nombre *</label><input type="text" required></div>
-                                <div class="form-group"><label>Contacto</label><input type="text"></div>
-                                <div class="form-group"><label>Fecha *</label><input type="date" required></div>
-                                <div class="form-group"><label>¿Cómo llegó?</label><select><option>Referido por un miembro</option><option>Redes sociales</option><option>Pasó por el sector</option><option>Otro</option></select></div>
-                                <div class="form-group span-2"><label>Observaciones</label><textarea></textarea></div>
-                            </div>
-                            <div class="form-actions"><button type="submit" class="btn-action">Guardar</button><button type="button" class="btn-cancel" onclick="toggleForm('form-nueva-visita')">Cancelar</button></div>
-                        </form>
-                    </div>
-                    <div class="table-card">
-                        <div class="visitas-list">
-                            <div class="visita-card-full"><div class="vcf-header"><div class="visita-av large">MA</div><div><strong>María Alejandra F.</strong><span class="vcf-fecha">Dom 8 Junio 2025</span></div><span class="badge new">Nueva</span></div><div class="vcf-details"><span>📱 +56 9 8765 4321</span><span>📌 Referida por Ana González</span><span>📝 Interesada en ministerio de niños</span></div></div>
-                            <div class="visita-card-full"><div class="vcf-header"><div class="visita-av large">CR</div><div><strong>Carlos R.</strong><span class="vcf-fecha">Mié 4 Junio 2025</span></div><span class="badge followup">Seguimiento</span></div><div class="vcf-details"><span>📱 +56 9 1234 5678</span><span>📌 Pasó por el sector</span><span>📝 Segunda visita, buen diálogo con los pastores</span></div></div>
                         </div>
                     </div>
                 </section>

@@ -713,9 +713,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!lista) return;
         lista.innerHTML = '<p class="agenda-vacia">Cargando agenda...</p>';
 
-        const [resultadoEventos, resultadoMiembros, resultadoCuentas] = await Promise.allSettled([
+        const [resultadoEventos, resultadoCuentas] = await Promise.allSettled([
             apiFetch('/api/eventos'),
-            apiFetch('/api/miembros'),
             esOficialConsulta() ? Promise.resolve({ cuentas: [] }) : apiFetch('/api/cuentas-pagar')
         ]);
 
@@ -727,13 +726,6 @@ document.addEventListener('DOMContentLoaded', () => {
             $('panel-actividades-futuras').textContent = '—';
             lista.innerHTML = `<p class="agenda-vacia">${sanitizar(resultadoEventos.reason.message)}</p>`;
             toast('No fue posible cargar la agenda', 'error');
-        }
-
-        if (resultadoMiembros.status === 'fulfilled') {
-            const miembros = resultadoMiembros.value.miembros || [];
-            $('panel-miembros-activos').textContent = miembros.filter(miembro => miembro.activo !== false).length;
-        } else {
-            $('panel-miembros-activos').textContent = '—';
         }
 
         if (resultadoCuentas.status === 'fulfilled') {

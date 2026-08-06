@@ -17,6 +17,21 @@ const FRECUENCIAS = ['unica', 'mensual', 'trimestral', 'semestral', 'anual'];
 const accesoLecturaPanel = verificarRol('pastor', 'tesorero');
 const accesoFinanciero = verificarRol('tesorero');
 
+router.get('/alertas', verificarToken, verificarRol('pastor', 'secretaria', 'tesorero'), async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('cuentas_por_pagar')
+            .select('id, nombre, proveedor, fecha_vencimiento, frecuencia, estado, fecha_revision, aviso_revision_dias, nota_revision')
+            .eq('estado', 'pendiente')
+            .order('fecha_vencimiento', { ascending: true });
+        if (error) throw error;
+        res.json({ cuentas: data || [] });
+    } catch (err) {
+        console.error('Error obteniendo alertas de cuentas:', err);
+        res.status(500).json({ error: 'No fue posible cargar las alertas financieras' });
+    }
+});
+
 router.get('/', verificarToken, accesoLecturaPanel, async (req, res) => {
     try {
         const { data, error } = await supabase

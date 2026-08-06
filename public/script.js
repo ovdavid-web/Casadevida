@@ -285,15 +285,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         ['menu-separador-finanzas', 'menu-titulo-finanzas'].forEach(id => {
-            $(id)?.classList.toggle('hidden', esOficial);
+            $(id)?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
         });
         $('menu-oficial-aportes')?.classList.toggle('hidden', !esOficial && !esPerfilTesorero);
 
         $('btn-nuevo-evento')?.classList.toggle('hidden', !puedeGestionarEventos());
-        $('btn-nueva-cuenta')?.classList.toggle('hidden', esOficial);
-        ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'panel-cuentas-pagar'].forEach(id => {
-            $(id)?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
+        $('btn-nueva-cuenta')?.classList.toggle('hidden', !puedeGestionarCuentas());
+        ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'resumen-revisiones-contrato', 'panel-alertas-financieras'].forEach(id => {
+            $(id)?.classList.toggle('hidden', esOficial);
         });
+        $('panel-cuentas-pagar')?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
         ['btn-nueva-persona', 'btn-nueva-familia'].forEach(id => {
             $(id)?.classList.toggle('hidden', esOficial || esPerfilTesorero || esPerfilSecretaria);
         });
@@ -920,7 +921,9 @@ document.addEventListener('DOMContentLoaded', () => {
             apiFetch('/api/eventos'),
             ['superadmin', 'pastor', 'tesorero'].includes(getUsuario().rol)
                 ? apiFetch('/api/cuentas-pagar')
-                : Promise.resolve({ cuentas: [] })
+                : esSecretaria()
+                    ? apiFetch('/api/cuentas-pagar/alertas')
+                    : Promise.resolve({ cuentas: [] })
         ]);
 
         if (resultadoEventos.status === 'fulfilled') {
@@ -942,6 +945,8 @@ document.addEventListener('DOMContentLoaded', () => {
             cuentasPorPagar = [];
             $('panel-cuentas-por-vencer').textContent = '—';
             $('panel-cuentas-vencidas').textContent = '—';
+            $('panel-revisiones-contrato').textContent = '—';
+            if ($('panel-alertas-lista')) $('panel-alertas-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las alertas.</p>';
             if ($('cuentas-pagar-lista')) $('cuentas-pagar-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las cuentas por pagar.</p>';
         }
     }
@@ -970,9 +975,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const dias = diasHastaVencimiento(cuenta.fecha_vencimiento);
             return dias >= 0 && dias <= 7;
         });
+        const revisiones = pendientes.filter(cuenta => cuenta.fecha_revision
+            && diasHastaVencimiento(cuenta.fecha_revision) <= Number(cuenta.aviso_revision_dias || 30));
 
         $('panel-cuentas-por-vencer').textContent = porVencer.length;
         $('panel-cuentas-vencidas').textContent = vencidas.length;
+        $('panel-revisiones-contrato').textContent = revisiones.length;
+        renderizarAlertasFinancierasPanel(pendientes, revisiones);
         $('cuentas-pagar-contador').textContent = pagosSinEgreso.length
             ? `${pagosSinEgreso.length} ${pagosSinEgreso.length === 1 ? 'pago requiere egreso' : 'pagos requieren egreso'}`
             : pendientes.length
@@ -1024,6 +1033,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 </article>`;
         }).join('');
     };
+
+    function renderizarAlertasFinancierasPanel(pendientes, revisiones) {
+        const lista = $('panel-alertas-lista');
+        if (!lista) return;
+        const alertasPago = pendientes
+            .map(cuenta => ({ cuenta, dias: diasHastaVencimiento(cuenta.fecha_vencimiento) }))
+            .filter(item => item.dias <= 7)
+            .map(item => ({
+                tipo: 'pago',
+                prioridad: item.dias,
+                titulo: item.cuenta.nombre,
+                detalle: item.dias < 0 ? `Vencida hace ${Math.abs(item.dias)} día${Math.abs(item.dias) === 1 ? '' : 's'}` : item.dias === 0 ? 'Vence hoy' : `Vence en ${item.dias} día${item.dias === 1 ? '' : 's'}`,
+                fecha: item.cuenta.fecha_vencimiento
+            }));
+        const alertasRevision = revisiones.map(cuenta => ({
+            tipo: 'revision',
+            prioridad: diasHastaVencimiento(cuenta.fecha_revision),
+            titulo: cuenta.nombre,
+            detalle: cuenta.nota_revision || 'Revisar condiciones, plan o proveedor',
+            fecha: cuenta.fecha_revision
+        }));
+        const alertas = [...alertasPago, ...alertasRevision]
+            .sort((a, b) => a.prioridad - b.prioridad)
+            .slice(0, 8);
+        if (!alertas.length) {
+            lista.innerHTML = '<p class="agenda-vacia">No hay pagos próximos ni contratos que requieran revisión.</p>';
+            return;
+        }
+        lista.innerHTML = alertas.map(alerta => `
+            <article class="panel-alerta-item ${alerta.tipo}">
+                <span class="panel-alerta-icono">${alerta.tipo === 'pago' ? '!' : '↻'}</span>
+                <div><strong>${sanitizar(alerta.titulo)}</strong><p>${sanitizar(alerta.detalle)}</p></div>
+                <time>${alerta.fecha.split('-').reverse().join('/')}</time>
+            </article>`).join('');
+    }
 
     window.toggleFormCuentaPagar = (abrir) => {
         const formulario = $('form-cuenta-pagar');

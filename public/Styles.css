@@ -410,7 +410,7 @@ a { text-decoration: none; color: inherit; }
 .stat-num { font-size: 1.35rem; font-weight: 800; color: var(--ink); line-height: 1.2; display: block; }
 .stat-label { font-size: 12px; color: var(--muted); }
 .dashboard-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.panel-resumen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
+.panel-resumen { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px; }
 .panel-resumen-card { display: flex; align-items: center; gap: 15px; min-width: 0; padding: 18px 20px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
 .panel-resumen-icono { display: flex; align-items: center; justify-content: center; flex: 0 0 42px; width: 42px; height: 42px; border-radius: 10px; font-size: 13px; }
 .panel-resumen-icono.miembros { background: #eef2ff; color: #4f46e5; }
@@ -482,6 +482,16 @@ a { text-decoration: none; color: inherit; }
 .agenda-evento { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border-soft); }
 .agenda-evento:last-child { border-bottom: 0; }
 .panel-agenda-evento { grid-template-columns:58px minmax(0,1fr); }
+.panel-alertas-financieras { margin-top:18px; overflow:hidden; }
+.panel-alertas-lista { padding:0 20px; }
+.panel-alerta-item { display:grid; grid-template-columns:34px minmax(0,1fr) auto; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--border-soft); }
+.panel-alerta-item:last-child { border-bottom:0; }
+.panel-alerta-icono { display:flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:#fff7ed; color:#c2410c; font-weight:800; }
+.panel-alerta-item.revision .panel-alerta-icono { background:#eff6ff; color:#1d4ed8; }
+.panel-alerta-item strong { display:block; margin-bottom:2px; font-size:12px; }
+.panel-alerta-item p,.panel-alerta-item time { color:var(--muted); font-size:10px; }
+
+@media (max-width:1250px) { .panel-resumen { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 .agenda-evento-visual { width: 58px; height: 58px; }
 .agenda-evento-miniatura { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border-soft); }
 .agenda-fecha { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 56px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; }

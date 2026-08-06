@@ -679,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.cerrarActaActual = async () => {
-        if (!actaActual || !window.confirm('¿Cerrar y proteger esta acta? Después requerirá una reapertura auditada para editarla.')) return;
+        if (!actaActual || !window.confirm('¿Confirmar y proteger esta acta? Después requerirá una reapertura auditada para editarla.')) return;
         try { const data = await apiFetch(`/api/secretaria/actas/${actaActual.id}/cerrar`, { method:'PATCH' }); toast(data.mensaje,'success'); window.cerrarLectorActa(); await cargarSecretaria(); }
         catch (err) { toast(err.message,'error'); }
     };

@@ -150,10 +150,10 @@ router.patch('/actas/:id/cerrar', verificarToken, verificarRol(...ROLES_SECRETAR
         const { data, error } = await supabase.from('actas').update({ estado:'cerrada', cerrada_en:new Date().toISOString(), cerrada_por:req.usuario.id, actualizado_por:req.usuario.id, actualizado_en:new Date().toISOString() }).eq('id', req.params.id).eq('estado','borrador').select().single();
         if (error) throw error;
         await auditar(req.usuario.id, 'CERRAR', 'actas', data.id, antes, data);
-        res.json({ mensaje:'Acta cerrada y protegida', acta:data });
+        res.json({ mensaje:'Acta confirmada y protegida', acta:data });
     } catch (err) {
         console.error('Error cerrando acta:', err);
-        res.status(500).json({ error:'No fue posible cerrar el acta' });
+        res.status(500).json({ error:'No fue posible confirmar el acta' });
     }
 });
 

@@ -35,7 +35,8 @@ $migrations = @(
     'database\021_recurrencia_y_moneda_cuentas.sql',
     'database\022_edicion_y_cierre_cuentas.sql',
     'database\023_alertas_diarias_cuentas.sql',
-    'database\024_actas_documentales.sql'
+    'database\024_actas_documentales.sql',
+    'database\025_busqueda_actas_sin_tildes.sql'
 )
 
 foreach ($migration in $migrations) {
@@ -156,6 +157,8 @@ where schemaname='public' and tablename='actas' and indexname='actas_busqueda_id
 select 'columnas_ciclo_actas=' || count(*) from information_schema.columns
 where table_schema='public' and table_name='actas'
   and column_name in ('cerrada_en','cerrada_por','reabierta_en','reabierta_por','motivo_reapertura','busqueda');
+select 'indice_actas_sin_tildes=' || count(*) from pg_indexes
+where schemaname='public' and tablename='actas' and indexname='actas_busqueda_normalizada_idx';
 
 select 'miembros=' || count(*) from public.miembros;
 select 'personas=' || count(*) from public.personas;

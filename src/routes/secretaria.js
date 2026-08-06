@@ -12,6 +12,10 @@ const texto = (valor, maximo = 5000) => {
     return limpio ? limpio.slice(0, maximo) : null;
 };
 
+const normalizarBusqueda = valor => valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 async function auditar(usuarioId, accion, tabla, registroId, antes, despues) {
     const { error } = await supabase.from('auditoria').insert({
         usuario_id: usuarioId,
@@ -65,7 +69,7 @@ router.get('/actas', verificarToken, verificarRol(...ROLES_SECRETARIA), async (r
             } else if (/^\d{4}-\d{2}-\d{2}$/.test(busqueda)) {
                 consulta = consulta.eq('fecha', busqueda);
             } else {
-                consulta = consulta.textSearch('busqueda', busqueda, { config: 'spanish', type: 'websearch' });
+                consulta = consulta.textSearch('busqueda_normalizada', normalizarBusqueda(busqueda), { config: 'spanish', type: 'websearch' });
             }
         }
         const { data, error } = await consulta

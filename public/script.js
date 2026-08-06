@@ -1131,6 +1131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const moneda = $('cuenta-pagar-moneda')?.value || 'CLP';
         $('cuenta-pagar-monto-label').textContent = moneda === 'USD' ? 'Monto estimado (USD)' : 'Monto estimado (CLP)';
         $('cuenta-pagar-monto').step = moneda === 'USD' ? '0.01' : '1';
+        $('cuenta-pagar-monto').min = moneda === 'USD' ? '0.01' : '1';
     };
 
     window.guardarCuentaPagar = async event => {
@@ -2739,5 +2740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.id === 'acuerdo-fecha') return;
         if (!el.value) el.value = hoyChile;
     });
+    window.actualizarMonedaCuenta();
 
 });

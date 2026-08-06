@@ -240,7 +240,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const esSecretaria = () => getUsuario().rol === 'secretaria';
     const tieneDirectorioLimitado = () => esOficialConsulta() || esTesorero();
     const puedeEditarDirectorio = () => !esOficialConsulta() && !esTesorero() && !esSecretaria();
-    const puedeGestionarEventos = () => !esOficialConsulta() && !esTesorero() && !esSecretaria();
+    const puedeGestionarEventos = () => ['superadmin', 'pastor', 'secretaria'].includes(getUsuario().rol);
+
+    // Cada herramienta vive visualmente en su módulo, aunque se conserva su
+    // implementación original para no duplicar lógica ni alterar datos.
+    $('secretaria-agenda-formulario')?.appendChild($('form-evento'));
+    $('secretaria-agenda-listado')?.appendChild($('agenda-lista')?.closest('.agenda-card'));
+    $('tesoreria-cuentas-contenido')?.appendChild($('panel-cuentas-pagar'));
 
     const configurarInterfazPorRol = usuario => {
         const esOficial = usuario.rol === 'oficial';
@@ -257,6 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'vista-mis-aportes',
             'vista-finanzas',
             'vista-egresos',
+            'vista-cuentas-pagar',
             'vista-finanzas-reporte'
         ]);
         const vistasSecretaria = new Set([
@@ -281,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         $('menu-oficial-aportes')?.classList.toggle('hidden', !esOficial && !esPerfilTesorero);
 
-        $('btn-nuevo-evento')?.classList.toggle('hidden', esOficial || esPerfilTesorero || esPerfilSecretaria);
+        $('btn-nuevo-evento')?.classList.toggle('hidden', !puedeGestionarEventos());
         $('btn-nueva-cuenta')?.classList.toggle('hidden', esOficial);
         ['resumen-cuentas-por-vencer', 'resumen-cuentas-vencidas', 'panel-cuentas-pagar'].forEach(id => {
             $(id)?.classList.toggle('hidden', esOficial || esPerfilSecretaria);
@@ -472,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : esSecretaria()
                 ? ['vista-inicio-admin', 'vista-miembros', 'vista-secretaria']
             : esTesorero()
-                ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes', 'vista-finanzas', 'vista-egresos', 'vista-finanzas-reporte']
+                ? ['vista-inicio-admin', 'vista-miembros', 'vista-mis-aportes', 'vista-finanzas', 'vista-egresos', 'vista-cuentas-pagar', 'vista-finanzas-reporte']
                 : null;
         if (vistasPermitidas && !vistasPermitidas.includes(id)) {
             id = 'vista-inicio-admin';
@@ -487,6 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (id === 'vista-finanzas')         cargarFinanzas();
         if (id === 'vista-finanzas-reporte') cargarReporte();
         if (id === 'vista-egresos')          cargarEgresos();
+        if (id === 'vista-cuentas-pagar')    cargarAgenda();
         if (id === 'vista-inicio-admin')      cargarAgenda();
         if (id === 'vista-secretaria')        cargarSecretaria();
         if (id === 'vista-perfil-miembro')    cargarMiPerfil();
@@ -522,6 +530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         $(`secretaria-seccion-${seccion}`)?.classList.remove('hidden');
         document.querySelectorAll('.secretaria-tabs button').forEach(item => item.classList.remove('activo'));
         boton?.classList.add('activo');
+        if (seccion === 'agenda') cargarAgenda();
         if (seccion === 'estructura') cargarEstructuraSecretaria();
     };
 
@@ -881,6 +890,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return referenciaFin >= ahora && !['suspendido', 'realizado'].includes(evento.estado);
     };
 
+    const renderizarAgendaInformativa = () => {
+        const lista = $('panel-agenda-lista');
+        if (!lista) return;
+        const proximos = eventosAgenda
+            .filter(evento => esEventoProximo(evento))
+            .sort((a, b) => new Date(a.fecha_inicio) - new Date(b.fecha_inicio))
+            .slice(0, 5);
+        if (!proximos.length) {
+            lista.innerHTML = '<p class="agenda-vacia">No hay próximas actividades registradas.</p>';
+            return;
+        }
+        lista.innerHTML = proximos.map(evento => {
+            const fecha = new Date(evento.fecha_inicio);
+            const dia = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', day: '2-digit' }).format(fecha);
+            const mes = new Intl.DateTimeFormat('es-CL', { timeZone: 'America/Santiago', month: 'short' }).format(fecha).replace('.', '').toUpperCase();
+            return `<article class="agenda-evento panel-agenda-evento"><div class="agenda-fecha"><span>${mes}</span><strong>${dia}</strong></div><div class="agenda-evento-info"><h4>${sanitizar(evento.titulo)}</h4><p>${sanitizar(fechaEvento(evento.fecha_inicio))}${evento.ubicacion ? ` · ${sanitizar(evento.ubicacion)}` : ''}</p><span>${sanitizar(evento.tipo)}</span></div></article>`;
+        }).join('');
+    };
+
     async function cargarAgenda() {
         const lista = $('agenda-lista');
         if (!lista) return;
@@ -888,16 +916,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const [resultadoEventos, resultadoCuentas] = await Promise.allSettled([
             apiFetch('/api/eventos'),
-            esOficialConsulta() ? Promise.resolve({ cuentas: [] }) : apiFetch('/api/cuentas-pagar')
+            ['superadmin', 'pastor', 'tesorero'].includes(getUsuario().rol)
+                ? apiFetch('/api/cuentas-pagar')
+                : Promise.resolve({ cuentas: [] })
         ]);
 
         if (resultadoEventos.status === 'fulfilled') {
             eventosAgenda = resultadoEventos.value.eventos || [];
             $('panel-actividades-futuras').textContent = eventosAgenda.filter(evento => esEventoProximo(evento)).length;
             window.renderizarAgenda();
+            renderizarAgendaInformativa();
         } else {
             $('panel-actividades-futuras').textContent = '—';
             lista.innerHTML = `<p class="agenda-vacia">${sanitizar(resultadoEventos.reason.message)}</p>`;
+            if ($('panel-agenda-lista')) $('panel-agenda-lista').innerHTML = `<p class="agenda-vacia">${sanitizar(resultadoEventos.reason.message)}</p>`;
             toast('No fue posible cargar la agenda', 'error');
         }
 
@@ -908,7 +940,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cuentasPorPagar = [];
             $('panel-cuentas-por-vencer').textContent = '—';
             $('panel-cuentas-vencidas').textContent = '—';
-            $('cuentas-pagar-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las cuentas por pagar.</p>';
+            if ($('cuentas-pagar-lista')) $('cuentas-pagar-lista').innerHTML = '<p class="agenda-vacia">No fue posible cargar las cuentas por pagar.</p>';
         }
     }
 

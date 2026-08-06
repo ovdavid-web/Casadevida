@@ -63,7 +63,7 @@ function prepararEvento(body) {
     return { evento };
 }
 
-router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), async (req, res) => {
+router.get('/', verificarToken, verificarRol('pastor', 'secretaria', 'tesorero', 'oficial'), async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('eventos').select('*').order('fecha_inicio', { ascending: true });
@@ -75,7 +75,7 @@ router.get('/', verificarToken, verificarRol('pastor', 'tesorero', 'oficial'), a
     }
 });
 
-router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
+router.post('/', verificarToken, verificarRol('pastor', 'secretaria'), async (req, res) => {
     try {
         const preparado = prepararEvento(req.body);
         if (preparado.error) return res.status(400).json({ error: preparado.error });
@@ -99,7 +99,7 @@ router.post('/', verificarToken, verificarRol('pastor'), async (req, res) => {
 router.post(
     '/:id/miniatura',
     verificarToken,
-    verificarRol('pastor'),
+    verificarRol('pastor', 'secretaria'),
     express.raw({ type: Object.keys(TIPOS_IMAGEN), limit: 307200 }),
     async (req, res) => {
         try {
@@ -148,7 +148,7 @@ router.post(
     }
 );
 
-router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
+router.put('/:id', verificarToken, verificarRol('pastor', 'secretaria'), async (req, res) => {
     try {
         const { id } = req.params;
         const preparado = prepararEvento(req.body);
@@ -181,7 +181,7 @@ router.put('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
     }
 });
 
-router.delete('/:id', verificarToken, verificarRol('pastor'), async (req, res) => {
+router.delete('/:id', verificarToken, verificarRol('pastor', 'secretaria'), async (req, res) => {
     try {
         const { id } = req.params;
         const motivoSuspension = req.body.motivo_suspension?.trim();

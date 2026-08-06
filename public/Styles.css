@@ -479,6 +479,7 @@ a { text-decoration: none; color: inherit; }
 .agenda-vacia { padding: 34px 10px; color: var(--muted); font-size: 13px; text-align: center; }
 .agenda-evento { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border-soft); }
 .agenda-evento:last-child { border-bottom: 0; }
+.panel-agenda-evento { grid-template-columns:58px minmax(0,1fr); }
 .agenda-evento-visual { width: 58px; height: 58px; }
 .agenda-evento-miniatura { width: 58px; height: 58px; border-radius: 10px; object-fit: cover; border: 1px solid var(--border-soft); }
 .agenda-fecha { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 56px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; }
@@ -1101,36 +1102,36 @@ body.modal-abierto { overflow: hidden; }
     #vista-inicio-admin .panel-resumen-icono { flex-basis: 30px; width: 30px; height: 30px; border-radius: 8px; font-size: 9px; }
     #vista-inicio-admin .panel-resumen-card strong { font-size: 19px; }
     #vista-inicio-admin .panel-resumen-card p { font-size: 9px; line-height: 1.35; }
-    #vista-inicio-admin .cuentas-panel-header { align-items: flex-start; padding: 14px; }
-    #vista-inicio-admin .cuenta-pagar-form { padding: 14px; }
-    #vista-inicio-admin .cuenta-pagar-grid { grid-template-columns: 1fr; }
-    #vista-inicio-admin .cuenta-pagar-observaciones { grid-column: auto; }
-    #vista-inicio-admin .cuenta-pagar-form input,
-    #vista-inicio-admin .cuenta-pagar-form select { font-size: 16px; }
-    #vista-inicio-admin .cuentas-pagar-lista { padding: 0 14px; }
-    #vista-inicio-admin .cuenta-pagar-item { grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
-    #vista-inicio-admin .cuenta-pagar-vence { text-align: right; }
-    #vista-inicio-admin .cuenta-pagar-acciones { grid-column: 1 / -1; }
-    #vista-inicio-admin .agenda-form { padding: 18px 14px; }
-    #vista-inicio-admin .agenda-form-grid { grid-template-columns: 1fr; }
-    #vista-inicio-admin .agenda-campo-ancho { grid-column: auto; }
-    #vista-inicio-admin .agenda-form input,
-    #vista-inicio-admin .agenda-form select,
-    #vista-inicio-admin .agenda-form textarea { font-size: 16px; }
-    #vista-inicio-admin .agenda-opciones { display: grid; grid-template-columns: 1fr; gap: 11px; }
-    #vista-inicio-admin .agenda-miniatura-selector { align-items: flex-start; }
-    #vista-inicio-admin .agenda-miniatura-preview { flex-basis: 68px; width: 68px; height: 68px; }
-    #vista-inicio-admin .agenda-miniatura-selector input[type="file"] { width: 100%; font-size: 12px; }
-    #vista-inicio-admin .agenda-toolbar { align-items: flex-end; padding: 14px; }
-    #vista-inicio-admin .agenda-toolbar select { min-width: 125px; font-size: 16px; }
-    #vista-inicio-admin .agenda-lista { padding: 0 14px; }
-    #vista-inicio-admin .agenda-evento { grid-template-columns: 50px minmax(0, 1fr); gap: 11px; padding: 14px 0; }
-    #vista-inicio-admin .agenda-evento-visual,
-    #vista-inicio-admin .agenda-evento-miniatura { width: 50px; height: 50px; }
-    #vista-inicio-admin .agenda-fecha { min-height: 50px; }
-    #vista-inicio-admin .agenda-fecha strong { font-size: 19px; }
-    #vista-inicio-admin .agenda-evento-titulo { align-items: flex-start; flex-direction: column; gap: 5px; }
-    #vista-inicio-admin .agenda-acciones { grid-column: 2; justify-content: flex-start; margin-top: -3px; }
+    #vista-cuentas-pagar .cuentas-panel-header { align-items: flex-start; padding: 14px; }
+    #vista-cuentas-pagar .cuenta-pagar-form { padding: 14px; }
+    #vista-cuentas-pagar .cuenta-pagar-grid { grid-template-columns: 1fr; }
+    #vista-cuentas-pagar .cuenta-pagar-observaciones { grid-column: auto; }
+    #vista-cuentas-pagar .cuenta-pagar-form input,
+    #vista-cuentas-pagar .cuenta-pagar-form select { font-size: 16px; }
+    #vista-cuentas-pagar .cuentas-pagar-lista { padding: 0 14px; }
+    #vista-cuentas-pagar .cuenta-pagar-item { grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
+    #vista-cuentas-pagar .cuenta-pagar-vence { text-align: right; }
+    #vista-cuentas-pagar .cuenta-pagar-acciones { grid-column: 1 / -1; }
+    #vista-secretaria .agenda-form { padding: 18px 14px; }
+    #vista-secretaria .agenda-form-grid { grid-template-columns: 1fr; }
+    #vista-secretaria .agenda-campo-ancho { grid-column: auto; }
+    #vista-secretaria .agenda-form input,
+    #vista-secretaria .agenda-form select,
+    #vista-secretaria .agenda-form textarea { font-size: 16px; }
+    #vista-secretaria .agenda-opciones { display: grid; grid-template-columns: 1fr; gap: 11px; }
+    #vista-secretaria .agenda-miniatura-selector { align-items: flex-start; }
+    #vista-secretaria .agenda-miniatura-preview { flex-basis: 68px; width: 68px; height: 68px; }
+    #vista-secretaria .agenda-miniatura-selector input[type="file"] { width: 100%; font-size: 12px; }
+    #vista-secretaria .agenda-toolbar { align-items: flex-end; padding: 14px; }
+    #vista-secretaria .agenda-toolbar select { min-width: 125px; font-size: 16px; }
+    #vista-secretaria .agenda-lista { padding: 0 14px; }
+    #vista-secretaria .agenda-evento { grid-template-columns: 50px minmax(0, 1fr); gap: 11px; padding: 14px 0; }
+    #vista-secretaria .agenda-evento-visual,
+    #vista-secretaria .agenda-evento-miniatura { width: 50px; height: 50px; }
+    #vista-secretaria .agenda-fecha { min-height: 50px; }
+    #vista-secretaria .agenda-fecha strong { font-size: 19px; }
+    #vista-secretaria .agenda-evento-titulo { align-items: flex-start; flex-direction: column; gap: 5px; }
+    #vista-secretaria .agenda-acciones { grid-column: 2; justify-content: flex-start; margin-top: -3px; }
     .modal-agenda { align-items: flex-end; padding: 10px; }
     .modal-agenda-panel { padding: 22px 18px; border-radius: 16px 16px 10px 10px; }
     .modal-agenda-panel textarea { font-size: 16px; }

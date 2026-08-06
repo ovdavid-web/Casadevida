@@ -474,6 +474,7 @@
                     <li id="menu-titulo-finanzas" class="nav-section-title">FINANZAS</li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas"><span class="nav-icon">💰</span> Registrar Ingreso</button></li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-egresos"><span class="nav-icon">💸</span> Egresos</button></li>
+                    <li><button class="nav-btn nav-finanzas" data-target="vista-cuentas-pagar"><span class="nav-icon">🧾</span> Cuentas por pagar</button></li>
                     <li><button class="nav-btn nav-finanzas" data-target="vista-finanzas-reporte"><span class="nav-icon">📊</span> Reportes</button></li>
                 </ul>
                 <ul id="menu-miembro" class="nav-links hidden">
@@ -490,7 +491,6 @@
                 <section id="vista-inicio-admin" class="view-section hidden">
                     <div class="page-header agenda-page-header">
                         <div><h1>Panel General</h1><p>Agenda y próximas actividades de Casa de Vida</p></div>
-                        <button id="btn-nuevo-evento" class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nuevo evento</button>
                     </div>
 
                     <div class="panel-resumen" aria-label="Resumen general">
@@ -518,6 +518,11 @@
                                 <p>Pendientes fuera de plazo</p>
                             </div>
                         </article>
+                    </div>
+
+                    <div id="panel-agenda-informativa" class="table-card agenda-card">
+                        <div class="agenda-toolbar"><div><h3>Próximas actividades</h3><span>Vista informativa</span></div></div>
+                        <div id="panel-agenda-lista" class="agenda-lista"><p class="agenda-vacia">Cargando agenda...</p></div>
                     </div>
 
                     <div id="panel-cuentas-pagar" class="table-card cuentas-panel">
@@ -722,9 +727,15 @@
                         <div><h1>Secretaría y Registros</h1><p>Memoria institucional, registros eclesiásticos y organización ministerial</p></div>
                     </div>
                     <div class="secretaria-tabs" role="tablist">
+                        <button type="button" onclick="cambiarSeccionSecretaria('agenda', this)">Agenda institucional</button>
                         <button class="activo" type="button" onclick="cambiarSeccionSecretaria('actas', this)">Actas</button>
                         <button type="button" onclick="cambiarSeccionSecretaria('acuerdos', this)">Libro de acuerdos</button>
                         <button type="button" onclick="cambiarSeccionSecretaria('estructura', this)">Estructura ministerial</button>
+                    </div>
+                    <div id="secretaria-seccion-agenda" class="secretaria-seccion hidden">
+                        <div class="secretaria-barra"><div><h3>Agenda institucional</h3><p>Reuniones y actividades generales de Casa de Vida.</p></div><button id="btn-nuevo-evento" class="btn-action" type="button" onclick="abrirFormularioEvento()">+ Nueva actividad</button></div>
+                        <div id="secretaria-agenda-formulario"></div>
+                        <div id="secretaria-agenda-listado"></div>
                     </div>
                     <div id="secretaria-seccion-actas" class="secretaria-seccion">
                         <div class="secretaria-barra"><div><h3>Actas institucionales</h3><p>Registro formal de reuniones y decisiones.</p></div><button class="btn-action" type="button" onclick="toggleForm('form-nueva-acta')">+ Nueva acta</button></div>
@@ -864,6 +875,10 @@
                             </div>
                         </div>
                     </div>
+                </section>
+                <section id="vista-cuentas-pagar" class="view-section hidden">
+                    <div class="page-header"><div><h1>Cuentas por pagar</h1><p>Compromisos, vencimientos y registro de pagos de Tesorería</p></div></div>
+                    <div id="tesoreria-cuentas-contenido"></div>
                 </section>
                 <section id="vista-egresos" class="view-section hidden">
                 <div class="page-header">
